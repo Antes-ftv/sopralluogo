@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sopralluogo Fotovoltaico</title>
+<style>
+  :root {
+    --green:#2e7d32;--green-light:#e8f5e9;--green-mid:#4caf50;
+    --blue:#1565c0;--blue-light:#e3f2fd;
+    --orange:#e65100;--orange-light:#fff3e0;
+    --gray:#546e7a;--gray-light:#eceff1;--border:#cfd8dc;
+    --white:#fff;--text:#263238;--red:#c62828;--red-light:#ffebee;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:var(--text);font-size:15px;}
+
+  /* ── LOGIN ── */
+  #login-view{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+  .login-card{background:white;border-radius:16px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.12);}
+  .login-logo{text-align:center;margin-bottom:28px;}
+  .login-logo .icon{font-size:48px;}
+  .login-logo h1{font-size:22px;font-weight:800;color:var(--green);margin-top:8px;}
+  .login-logo p{font-size:13px;color:var(--gray);margin-top:4px;}
+  .login-field{margin-bottom:16px;}
+  .login-field label{display:block;font-size:13px;font-weight:600;color:var(--gray);margin-bottom:5px;}
+  .login-field input{width:100%;border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-size:15px;}
+  .login-field input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(46,125,50,.1);}
+  .btn-login{width:100%;background:var(--green);color:white;border:none;border-radius:8px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px;}
+  .btn-login:hover{background:#1b5e20;}
+  .login-err{background:var(--red-light);color:var(--red);border-radius:8px;padding:10px 14px;font-size:13px;margin-top:12px;display:none;}
+
+  /* ── HEADER ── */
+  .app-header{background:var(--green);color:white;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+  .app-header h1{font-size:18px;font-weight:600;}
+  .header-right{display:flex;align-items:center;gap:12px;}
+  .user-badge{font-size:13px;opacity:.9;background:rgba(255,255,255,.15);padding:4px 10px;border-radius:12px;}
+  .btn-logout{background:rgba(255,255,255,.15);border:none;color:white;border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;}
+  .btn-logout:hover{background:rgba(255,255,255,.25);}
+
+  /* ── NAV TABS ── */
+  .nav-tabs{background:white;border-bottom:1px solid var(--border);display:flex;padding:0 20px;gap:0;}
+  .nav-tab{padding:14px 20px;font-size:14px;font-weight:600;color:var(--gray);cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;}
+  .nav-tab.active{color:var(--green);border-bottom-color:var(--green);}
+  .nav-tab:hover{color:var(--green);}
+
+  /* ── VIEWS ── */
+  .view{display:none;}
+  .view.active{display:block;}
+  #app-shell{display:none;}
+  #app-shell.active{display:block;}
+
+  /* ── DASHBOARD ── */
+  .dashboard{max-width:900px;margin:0 auto;padding:24px 16px;}
+  .dash-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .dash-title{font-size:22px;font-weight:700;}
+  .btn-new{background:var(--green);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;}
+  .btn-new:hover{background:#1b5e20;}
+  .stats-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+  .stat-card{background:white;border-radius:10px;padding:14px 20px;flex:1;min-width:120px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid var(--green);}
+  .stat-card.orange{border-left-color:var(--orange);}
+  .stat-card.blue{border-left-color:var(--blue);}
+  .stat-num{font-size:28px;font-weight:700;}
+  .stat-label{font-size:12px;color:var(--gray);margin-top:2px;}
+  .search-bar{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:16px;background:white;}
+  .search-bar:focus{outline:none;border-color:var(--green);}
+  .card-list{display:flex;flex-direction:column;gap:10px;}
+  .survey-card{background:white;border-radius:10px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:box-shadow .2s;border:1px solid transparent;}
+  .survey-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.12);border-color:var(--green-mid);}
+  .card-main{flex:1;}
+  .card-client{font-weight:700;font-size:16px;}
+  .card-meta{font-size:13px;color:var(--gray);margin-top:3px;}
+  .card-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;margin-right:6px;}
+  .badge-residenziale{background:var(--green-light);color:var(--green);}
+  .badge-ci{background:var(--blue-light);color:var(--blue);}
+  .badge-bozza{background:var(--orange-light);color:var(--orange);}
+  .badge-completo{background:var(--green-light);color:var(--green);}
+  .card-actions{display:flex;gap:8px;}
+  .btn-icon{background:none;border:1px solid var(--border);border-radius:6px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .btn-icon:hover{background:var(--gray-light);}
+  .btn-icon.danger:hover{background:var(--red-light);border-color:var(--red);}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--gray);}
+  .empty-state .icon{font-size:48px;margin-bottom:12px;}
+
+  /* ── FORM ── */
+  .form-container{max-width:860px;margin:0 auto;padding:20px 16px 80px;}
+  .form-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+  .btn-back{background:white;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:14px;cursor:pointer;}
+  .form-title{font-size:20px;font-weight:700;}
+  .type-selector{display:flex;gap:12px;margin-bottom:24px;}
+  .type-btn{flex:1;padding:14px;border:2px solid var(--border);border-radius:10px;background:white;cursor:pointer;text-align:center;font-size:14px;font-weight:600;transition:all .2s;}
+  .type-btn.active{border-color:var(--green);background:var(--green-light);color:var(--green);}
+  .type-icon{font-size:24px;display:block;margin-bottom:4px;}
+  .section{background:white;border-radius:12px;margin-bottom:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+  .section-header{background:var(--green);color:white;padding:12px 18px;font-weight:700;font-size:14px;letter-spacing:.3px;}
+  .section-header.blue{background:var(--blue);}
+  .section-header.orange{background:var(--orange);}
+  .section-body{padding:18px;}
+  .form-row{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap;}
+  .form-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:200px;}
+  .form-group.full{flex:100%;min-width:100%;}
+  .form-group.half{flex:1;min-width:160px;}
+  label{font-size:13px;font-weight:600;color:var(--gray);}
+  input[type="text"],input[type="number"],input[type="date"],textarea,select{border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:14px;color:var(--text);background:white;width:100%;}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(46,125,50,.1);}
+  textarea{resize:vertical;min-height:72px;}
+  .check-group{display:flex;flex-wrap:wrap;gap:8px;}
+  .check-item{display:flex;align-items:center;gap:6px;background:var(--gray-light);border:1px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px;user-select:none;transition:all .15s;}
+  .check-item input{display:none;}
+  .check-item.selected{background:var(--green-light);border-color:var(--green-mid);color:var(--green);font-weight:600;}
+  .toggle-group{display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+  .toggle-btn{flex:1;padding:8px;background:white;border:none;cursor:pointer;font-size:13px;font-weight:600;color:var(--gray);}
+  .toggle-btn+.toggle-btn{border-left:1px solid var(--border);}
+  .toggle-btn.active-yes{background:var(--green-light);color:var(--green);}
+  .toggle-btn.active-no{background:var(--red-light);color:var(--red);}
+  .schema-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .schema-col{background:var(--gray-light);border-radius:8px;padding:10px;}
+  .schema-col-title{font-size:11px;font-weight:700;color:var(--gray);margin-bottom:8px;text-transform:uppercase;}
+  .ci-note{background:var(--blue-light);border:1px solid var(--blue);border-radius:8px;padding:12px 16px;font-size:13px;color:var(--blue);margin-bottom:16px;}
+  .bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--border);padding:12px 20px;display:flex;gap:10px;justify-content:flex-end;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.08);}
+  .btn-save{background:var(--green);color:white;border:none;border-radius:8px;padding:11px 24px;font-size:15px;font-weight:600;cursor:pointer;}
+  .btn-save:hover{background:#1b5e20;}
+  .btn-draft{background:white;color:var(--gray);border:1px solid var(--border);border-radius:8px;padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer;}
+
+  /* ── REPORT ── */
+  .report-container{max-width:860px;margin:0 auto;padding:20px 16px 80px;}
+  .report-doc{background:white;border:1px solid var(--border);border-radius:8px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .report-logo-row{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--green);padding-bottom:14px;margin-bottom:20px;}
+  .report-logo{font-size:22px;font-weight:800;color:var(--green);}
+  .report-logo span{color:var(--gray);font-weight:400;font-size:13px;display:block;}
+  .report-title-right{font-size:14px;font-weight:700;color:var(--gray);text-align:right;}
+  .report-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px;}
+  .report-table td,.report-table th{border:1px solid var(--border);padding:7px 10px;vertical-align:top;}
+  .report-table th{background:var(--gray-light);font-weight:700;font-size:11px;text-transform:uppercase;color:var(--gray);width:35%;}
+  .report-section-title{background:var(--green);color:white;font-weight:700;font-size:12px;letter-spacing:.5px;text-transform:uppercase;padding:6px 10px;border-radius:4px;margin:16px 0 8px;}
+  .report-section-title.blue{background:var(--blue);}
+  .report-section-title.orange{background:var(--orange);}
+  .rv{font-weight:500;}
+  .rv.yes{color:var(--green);font-weight:700;}
+  .rv.no{color:var(--red);font-weight:700;}
+  .sign-row{display:flex;gap:30px;margin-top:30px;padding-top:20px;border-top:1px solid var(--border);}
+  .sign-box{flex:1;}
+  .sign-label{font-size:12px;color:var(--gray);font-weight:700;margin-bottom:30px;}
+  .sign-line{border-bottom:1px solid var(--text);}
+
+  /* ── UTENTI ── */
+  .users-container{max-width:700px;margin:0 auto;padding:24px 16px;}
+  .users-title{font-size:22px;font-weight:700;margin-bottom:20px;}
+  .user-row{background:white;border-radius:10px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+  .user-info .user-name{font-weight:700;}
+  .user-info .user-email{font-size:13px;color:var(--gray);}
+  .role-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;}
+  .role-admin{background:#fce4ec;color:#c62828;}
+  .role-user{background:var(--green-light);color:var(--green);}
+  .add-user-form{background:white;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+  .add-user-title{font-size:16px;font-weight:700;margin-bottom:14px;}
+
+  /* ── MODAL ── */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;}
+  .modal-overlay.active{display:flex;}
+  .modal{background:white;border-radius:12px;padding:28px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+  .modal h3{font-size:18px;font-weight:700;margin-bottom:12px;}
+  .modal p{color:var(--gray);font-size:14px;margin-bottom:20px;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;}
+  .btn-cancel{background:white;border:1px solid var(--border);border-radius:7px;padding:9px 18px;cursor:pointer;font-size:14px;}
+  .btn-danger{background:var(--red);color:white;border:none;border-radius:7px;padding:9px 18px;cursor:pointer;font-size:14px;font-weight:600;}
+
+  /* ── TOAST ── */
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#323232;color:white;padding:12px 20px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .3s;z-index:999;pointer-events:none;white-space:nowrap;}
+  .toast.show{opacity:1;}
+
+  /* ── LOADER ── */
+  .loader{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--gray);}
+
+  /* ── CAMBIO PASSWORD ── */
+  .pwd-form{background:white;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+
+  @media print{
+    .app-header,.nav-tabs,.form-nav,.bottom-bar,.no-print{display:none!important;}
+    body{background:white;}
+    .report-doc{box-shadow:none;border:none;padding:0;}
+    #login-view,#app-shell{display:block!important;}
+    #dashboard-view,#form-view,#users-view{display:none!important;}
+    #report-view{display:block!important;}
+  }
+  @media(max-width:600px){
+    .form-row{flex-direction:column;}
+    .schema-fields{grid-template-columns:1fr;}
+    .stats-row{flex-direction:column;}
+    .sign-row{flex-direction:column;}
+    .type-selector{flex-direction:column;}
+  }
+  /* ── FOTO ── */
+  .foto-cat{border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;}
+  .foto-cat-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--gray-light);font-size:13px;font-weight:600;}
+  .foto-cat-count{font-size:11px;background:var(--green);color:white;padding:2px 8px;border-radius:10px;}
+  .foto-cat-body{padding:12px 14px;}
+  .foto-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+  .foto-thumb{position:relative;width:90px;height:90px;border-radius:6px;overflow:hidden;border:1px solid var(--border);}
+  .foto-thumb img{width:100%;height:100%;object-fit:cover;cursor:pointer;}
+  .foto-thumb .del-btn{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .foto-thumb .nota-tag{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.5);color:white;font-size:9px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .btn-add-foto{background:var(--green-light);color:var(--green);border:1px dashed var(--green);border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;width:100%;}
+  .btn-add-foto:hover{background:var(--green);color:white;}
+  .foto-nota-input{width:100%;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;margin-bottom:8px;}
+  .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;align-items:center;justify-content:center;}
+  .lightbox.active{display:flex;}
+  .lightbox img{max-width:95vw;max-height:90vh;border-radius:8px;}
+  .lightbox-close{position:absolute;top:16px;right:20px;background:none;border:none;color:white;font-size:28px;cursor:pointer;}
+  .report-foto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;}
+  @media(max-width:500px){.report-foto-grid{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="login-view">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="icon">☀️</div>
+      <h1>Sopralluogo FTV</h1>
+      <p>Accedi per continuare</p>
+    </div>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="text" id="l-email" placeholder="la-tua@email.it" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="l-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" onclick="doLogin()">Accedi</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ══════════════ APP SHELL ══════════════ -->
+<div id="app-shell">
+  <div class="app-header">
+    <h1>☀️ Sopralluogo FTV</h1>
+    <div class="header-right">
+      <span class="user-badge" id="user-badge">—</span>
+      <button class="btn-logout" onclick="doLogout()">Esci</button>
+    </div>
+  </div>
+  <div class="nav-tabs" id="nav-tabs">
+    <div class="nav-tab active" onclick="switchTab('dashboard')">📋 Sopralluoghi</div>
+    <div class="nav-tab" id="tab-users" style="display:none" onclick="switchTab('users')">👥 Utenti</div>
+    <div class="nav-tab" onclick="switchTab('password')">🔑 Password</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard-view" class="view active">
+    <div class="dashboard">
+      <div class="dash-top">
+        <div class="dash-title">I sopralluoghi</div>
+        <button class="btn-new" onclick="newSurvey()">＋ Nuovo</button>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Totali</div></div>
+        <div class="stat-card orange"><div class="stat-num" id="stat-bozza">0</div><div class="stat-label">Bozze</div></div>
+        <div class="stat-card blue"><div class="stat-num" id="stat-completo">0</div><div class="stat-label">Completati</div></div>
+      </div>
+      <input class="search-bar" type="text" placeholder="🔍 Cerca per cliente, tecnico, località..." oninput="renderCards(this.value)" id="search-input">
+      <div class="card-list" id="card-list"><div class="loader">Caricamento...</div></div>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <div id="form-view" class="view">
+    <div class="form-container">
+      <div class="form-nav">
+        <button class="btn-back" onclick="goBackToDash()">← Indietro</button>
+        <div class="form-title" id="form-view-title">Nuovo sopralluogo</div>
+      </div>
+      <div class="type-selector">
+        <div class="type-btn active" id="type-res" onclick="setType('residenziale')"><span class="type-icon">🏠</span>Residenziale</div>
+        <div class="type-btn" id="type-ci" onclick="setType('ci')"><span class="type-icon">🏭</span>C&amp;I</div>
+      </div>
+      <div class="ci-note" id="ci-note" style="display:none">ℹ️ Modulo C&I — campi aggiuntivi per potenza contrattuale, connessione rete, cabina MT/BT e accordo GSE.</div>
+
+      <div class="section">
+        <div class="section-header">📋 Informazioni generali</div>
+        <div class="section-body">
+          <div class="form-row">
+            <div class="form-group"><label>Ditta committente</label><input type="text" id="f-ditta" placeholder="Es. Bioenergia Srl"></div>
+            <div class="form-group"><label>Nome tecnico</label><input type="text" id="f-tecnico" placeholder="Nome e cognome"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Data sopralluogo</label><input type="date" id="f-data"></div>
+            <div class="form-group"><label>Località</label><input type="text" id="f-localita" placeholder="Città, Provincia"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Cliente</label><input type="text" id="f-cliente" placeholder="Nome / Ragione sociale"></div>
+            <div class="form-group"><label>Telefono cliente</label><input type="text" id="f-telefono" placeholder="+39..."></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">⚡ Impianto proposto</div>
+        <div class="section-body">
+          <div class="form-row">
+            <div class="form-group"><label>Tipo fornitura</label>
+              <div class="toggle-group" style="max-width:200px">
+                <button class="toggle-btn" id="t-fornitura-monofase" onclick="setToggle('fornitura','monofase')">Monofase</button>
+                <button class="toggle-btn" id="t-fornitura-trifase" onclick="setToggle('fornitura','trifase')">Trifase</button>
+              </div>
+            </div>
+            <div class="form-group"><label>Potenza totale (kW)</label><input type="number" id="f-kw" step="0.1" placeholder="Es. 6.5"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Quantità e modello pannelli</label><input type="text" id="f-pannelli" placeholder="Es. 12x Longi 410W"></div>
+            <div class="form-group"><label>Quantità e modello inverter</label><input type="text" id="f-inverter" placeholder="Es. 1x Solis 6kW"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group half"><label>Batteria</label>
+              <div class="toggle-group"><button class="toggle-btn" id="t-batteria-si" onclick="setToggle('batteria','si')">Sì</button><button class="toggle-btn" id="t-batteria-no" onclick="setToggle('batteria','no')">No</button></div>
+            </div>
+            <div class="form-group"><label>Potenza accumulo</label><input type="text" id="f-accumulo" placeholder="Es. 10 kWh"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group half"><label>Ottimizzatori</label>
+              <div class="toggle-group"><button class="toggle-btn" id="t-ottimizzatori-si" onclick="setToggle('ottimizzatori','si')">Sì</button><button class="toggle-btn" id="t-ottimizzatori-no" onclick="setToggle('ottimizzatori','no')">No</button></div>
+            </div>
+            <div class="form-group half"><label>Colonnina ricarica</label>
+              <div class="toggle-group"><button class="toggle-btn" id="t-colonnina-si" onclick="setToggle('colonnina','si')">Sì</button><button class="toggle-btn" id="t-colonnina-no" onclick="setToggle('colonnina','no')">No</button></div>
+            </div>
+            <div class="form-group"><label>Modello colonnina</label><input type="text" id="f-colonnina-mod" placeholder="Marca e modello"></div>
+          </div>
+          <div id="ci-extra-impianto" style="display:none">
+            <hr style="margin:12px 0;border:none;border-top:1px solid var(--border)">
+            <div class="form-row">
+              <div class="form-group"><label>Potenza contrattuale (kW)</label><input type="number" id="f-pot-contrattuale" placeholder="Es. 100"></div>
+              <div class="form-group"><label>Tipo connessione rete</label>
+                <div class="check-group" id="cg-connessione-rete">
+                  <label class="check-item" onclick="toggleCheck(this,'connessione-rete')"><input type="checkbox">BT (230/400V)</label>
+                  <label class="check-item" onclick="toggleCheck(this,'connessione-rete')"><input type="checkbox">MT (15/20kV)</label>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group half"><label>Cabina MT/BT</label>
+                <div class="toggle-group"><button class="toggle-btn" id="t-cabina-si" onclick="setToggle('cabina','si')">Sì</button><button class="toggle-btn" id="t-cabina-no" onclick="setToggle('cabina','no')">No</button></div>
+              </div>
+              <div class="form-group half"><label>Accordo GSE</label>
+                <div class="toggle-group"><button class="toggle-btn" id="t-gse-ssp" onclick="setToggle('gse','ssp')">Scambio sul posto</button><button class="toggle-btn" id="t-gse-rd" onclick="setToggle('gse','rd')">Ritiro dedicato</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">🏠 Tipo abitazione e copertura</div>
+        <div class="section-body">
+          <div class="form-row">
+            <div class="form-group full"><label>Tipo abitazione</label>
+              <div class="check-group" id="cg-abitazione">
+                <label class="check-item" onclick="toggleCheck(this,'abitazione',true)"><input type="checkbox">Singola</label>
+                <label class="check-item" onclick="toggleCheck(this,'abitazione',true)"><input type="checkbox">Bifamiliare</label>
+                <label class="check-item" onclick="toggleCheck(this,'abitazione',true)"><input type="checkbox">A schiera</label>
+                <label class="check-item" onclick="toggleCheck(this,'abitazione',true)"><input type="checkbox">Condominio</label>
+                <label class="check-item" onclick="toggleCheck(this,'abitazione',true)"><input type="checkbox">Capannone</label>
+                <label class="check-item" onclick="toggleCheck(this,'abitazione',true)"><input type="checkbox">Altro</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Numero piani</label>
+              <div class="check-group" id="cg-piani">
+                <label class="check-item" onclick="toggleCheck(this,'piani',true)"><input type="checkbox">1</label>
+                <label class="check-item" onclick="toggleCheck(this,'piani',true)"><input type="checkbox">2</label>
+                <label class="check-item" onclick="toggleCheck(this,'piani',true)"><input type="checkbox">3</label>
+                <label class="check-item" onclick="toggleCheck(this,'piani',true)"><input type="checkbox">Altro</label>
+              </div>
+            </div>
+            <div class="form-group half"><label>Altezza grondaia (mt)</label><input type="number" id="f-altezza" step="0.1" placeholder="Es. 7.5"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Tipo tetto</label>
+              <div class="check-group" id="cg-tetto">
+                <label class="check-item" onclick="toggleCheck(this,'tetto',true)"><input type="checkbox">Inclinato</label>
+                <label class="check-item" onclick="toggleCheck(this,'tetto',true)"><input type="checkbox">Piano</label>
+                <label class="check-item" onclick="toggleCheck(this,'tetto',true)"><input type="checkbox">Altro</label>
+              </div>
+            </div>
+            <div class="form-group"><label>Tipo copertura</label>
+              <div class="check-group" id="cg-copertura">
+                <label class="check-item" onclick="toggleCheck(this,'copertura',true)"><input type="checkbox">Tegola</label>
+                <label class="check-item" onclick="toggleCheck(this,'copertura',true)"><input type="checkbox">Coppi</label>
+                <label class="check-item" onclick="toggleCheck(this,'copertura',true)"><input type="checkbox">Lamiera esistente</label>
+                <label class="check-item" onclick="toggleCheck(this,'copertura',true)"><input type="checkbox">Altro</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group full"><label>Tipo struttura</label>
+              <div class="check-group" id="cg-struttura">
+                <label class="check-item" onclick="toggleCheck(this,'struttura',true)"><input type="checkbox">Legno</label>
+                <label class="check-item" onclick="toggleCheck(this,'struttura',true)"><input type="checkbox">Legno ventilato</label>
+                <label class="check-item" onclick="toggleCheck(this,'struttura',true)"><input type="checkbox">Legno con tavelline</label>
+                <label class="check-item" onclick="toggleCheck(this,'struttura',true)"><input type="checkbox">CLS</label>
+                <label class="check-item" onclick="toggleCheck(this,'struttura',true)"><input type="checkbox">Tavelloni</label>
+                <label class="check-item" onclick="toggleCheck(this,'struttura',true)"><input type="checkbox">CLS + Tavelloni</label>
+                <label class="check-item" onclick="toggleCheck(this,'struttura',true)"><input type="checkbox">Altro</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group half"><label>Guaina</label>
+              <div class="toggle-group"><button class="toggle-btn" id="t-guaina-si" onclick="setToggle('guaina','si')">Sì</button><button class="toggle-btn" id="t-guaina-no" onclick="setToggle('guaina','no')">No</button></div>
+            </div>
+            <div class="form-group"><label>Stato copertura</label>
+              <div class="check-group" id="cg-stato-copertura">
+                <label class="check-item" onclick="toggleCheck(this,'stato-copertura',true)"><input type="checkbox">✅ Ottimo</label>
+                <label class="check-item" onclick="toggleCheck(this,'stato-copertura',true)"><input type="checkbox">⚠️ Sufficiente</label>
+                <label class="check-item" onclick="toggleCheck(this,'stato-copertura',true)"><input type="checkbox">❌ Pessimo</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row"><div class="form-group full"><label>Note copertura</label><textarea id="f-note-copertura" placeholder="Ostacoli, camini, stato tegole..."></textarea></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header orange">🦺 Messa in sicurezza</div>
+        <div class="section-body">
+          <div class="form-row">
+            <div class="form-group half"><label>Utilizzo cesta</label>
+              <div class="toggle-group"><button class="toggle-btn" id="t-cesta-si" onclick="setToggle('cesta','si')">Sì</button><button class="toggle-btn" id="t-cesta-no" onclick="setToggle('cesta','no')">No</button></div>
+            </div>
+            <div class="form-group half"><label>Per n° giorni</label><input type="number" id="f-cesta-giorni" placeholder="Es. 2"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group full"><label>Cesta su</label>
+              <div class="check-group" id="cg-cesta-su">
+                <label class="check-item" onclick="toggleCheck(this,'cesta-su',true)"><input type="checkbox">Suolo cliente</label>
+                <label class="check-item" onclick="toggleCheck(this,'cesta-su',true)"><input type="checkbox">Suolo pubblico</label>
+                <label class="check-item" onclick="toggleCheck(this,'cesta-su',true)"><input type="checkbox">In altra proprietà</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group full"><label>Attrezzatura sicurezza</label>
+              <div class="check-group" id="cg-sicurezza">
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Parapetti</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Trabatello</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Ponteggio</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Linea vita esistente</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Scala</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row"><div class="form-group full"><label>Altro</label><input type="text" id="f-sicurezza-altro" placeholder="Specificare"></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header blue">🔌 Impianto elettrico</div>
+        <div class="section-body">
+          <div class="form-row">
+            <div class="form-group"><label>Impianto di terra</label>
+              <div class="check-group" id="cg-terra">
+                <label class="check-item" onclick="toggleCheck(this,'terra',true)"><input type="checkbox">Esistente</label>
+                <label class="check-item" onclick="toggleCheck(this,'terra',true)"><input type="checkbox">Non presente — da realizzare</label>
+              </div>
+            </div>
+            <div class="form-group"><label>Sezione terra (mm²)</label><input type="text" id="f-terra-sezione" placeholder="Es. 16"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Interruttore generale</label>
+              <div class="check-group" id="cg-interruttore">
+                <label class="check-item" onclick="toggleCheck(this,'interruttore',true)"><input type="checkbox">A norma</label>
+                <label class="check-item" onclick="toggleCheck(this,'interruttore',true)"><input type="checkbox">Altro</label>
+              </div>
+            </div>
+            <div class="form-group"><label>Modello interruttore</label><input type="text" id="f-interruttore-mod" placeholder="Es. ABB S203 25A"></div>
+          </div>
+          <div style="margin-top:16px">
+            <div style="font-size:13px;font-weight:700;color:var(--gray);margin-bottom:10px;text-transform:uppercase;">Schema semplificato impianto</div>
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:14px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:70px;background:var(--blue-light);border:1px solid var(--blue);border-radius:8px;padding:10px;text-align:center;font-size:11px;font-weight:700;color:var(--blue);">ENEL</div>
+              <div style="color:var(--blue);font-size:18px;">→</div>
+              <div style="flex:1;min-width:90px;background:var(--blue-light);border:1px solid var(--blue);border-radius:8px;padding:10px;text-align:center;font-size:11px;font-weight:700;color:var(--blue);">Q.GEN.<br>ABITAZ.</div>
+              <div style="color:var(--blue);font-size:18px;">→</div>
+              <div style="flex:1;min-width:90px;background:var(--blue-light);border:1px solid var(--blue);border-radius:8px;padding:10px;text-align:center;font-size:11px;font-weight:700;color:var(--blue);">INVERTER<br>GEN. FTV</div>
+              <div style="color:var(--blue);font-size:18px;">→</div>
+              <div style="flex:1;min-width:90px;background:var(--blue-light);border:1px solid var(--blue);border-radius:8px;padding:10px;text-align:center;font-size:11px;font-weight:700;color:var(--blue);">PANNELLI<br>FTV</div>
+            </div>
+            <div class="schema-fields">
+              <div class="schema-col">
+                <div class="schema-col-title">ENEL → Q.Gen. Abitaz.</div>
+                <div class="form-group" style="margin-bottom:8px"><label>Distanza (mt)</label><input type="text" id="f-pa-mt" placeholder="Es. 12"></div>
+                <div class="form-group"><label>Sez. cavo (mm²)</label><input type="text" id="f-pa-sez" placeholder="Es. 16"></div>
+              </div>
+              <div class="schema-col">
+                <div class="schema-col-title">Q.Gen. → Inverter</div>
+                <div class="form-group"><label>Distanza (mt)</label><input type="text" id="f-pb-mt" placeholder="Es. 8"></div>
+              </div>
+              <div class="schema-col">
+                <div class="schema-col-title">Inverter → Pannelli FTV</div>
+                <div class="form-group"><label>Distanza (mt)</label><input type="text" id="f-inv-mt" placeholder="Es. 15"></div>
+              </div>
+            </div>
+            <div style="margin-top:10px;background:var(--gray-light);border-radius:8px;padding:10px 12px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+              <div class="form-group" style="min-width:160px"><label>Contatore M2</label>
+                <div class="toggle-group" style="max-width:140px"><button class="toggle-btn" id="t-m2-si" onclick="setToggle('m2','si')">Sì</button><button class="toggle-btn" id="t-m2-no" onclick="setToggle('m2','no')">No</button></div>
+              </div>
+              <div class="form-group" style="min-width:140px"><label>Sez. cavo M2 (mm²)</label><input type="text" id="f-m2-sez" placeholder="Es. 6"></div>
+            </div>
+          </div>
+          <div class="form-row" style="margin-top:14px"><div class="form-group full"><label>Note impianto elettrico</label><textarea id="f-note-elettrico" placeholder="Osservazioni..."></textarea></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">🔁 Apparati esistenti</div>
+        <div class="section-body">
+          <div class="form-row">
+            <div class="form-group half"><label>Pannelli esistenti</label>
+              <div class="toggle-group"><button class="toggle-btn" id="t-pan-esis-si" onclick="setToggle('pan-esis','si')">Sì</button><button class="toggle-btn" id="t-pan-esis-no" onclick="setToggle('pan-esis','no')">No</button></div>
+            </div>
+            <div class="form-group half"><label>N° pannelli</label><input type="number" id="f-pan-esis-num" placeholder="n°"></div>
+            <div class="form-group"><label>Marca e modello</label><input type="text" id="f-pan-esis-mod" placeholder="Es. SunPower 340W"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group half"><label>Inverter esistente</label>
+              <div class="toggle-group"><button class="toggle-btn" id="t-inv-esis-si" onclick="setToggle('inv-esis','si')">Sì</button><button class="toggle-btn" id="t-inv-esis-no" onclick="setToggle('inv-esis','no')">No</button></div>
+            </div>
+            <div class="form-group half"><label>N° inverter</label><input type="number" id="f-inv-esis-num" placeholder="n°"></div>
+            <div class="form-group"><label>Marca e modello</label><input type="text" id="f-inv-esis-mod" placeholder="Es. Fronius 6kW"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group half"><label>Batteria esistente</label>
+              <div class="toggle-group"><button class="toggle-btn" id="t-batt-esis-si" onclick="setToggle('batt-esis','si')">Sì</button><button class="toggle-btn" id="t-batt-esis-no" onclick="setToggle('batt-esis','no')">No</button></div>
+            </div>
+            <div class="form-group half"><label>N° batterie</label><input type="number" id="f-batt-esis-num" placeholder="n°"></div>
+            <div class="form-group"><label>Marca e modello</label><input type="text" id="f-batt-esis-mod" placeholder="Es. Tesla Powerwall"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">📍 Posizionamenti e logistica</div>
+        <div class="section-body">
+          <div class="form-row"><div class="form-group full"><label>Posizionamento nuovo inverter</label><input type="text" id="f-pos-inverter" placeholder="Es. Locale tecnico, parete nord"></div></div>
+          <div class="form-row"><div class="form-group full"><label>Posizionamento nuova batteria</label><input type="text" id="f-pos-batteria" placeholder="Es. Garage, parete laterale"></div></div>
+          <div class="form-row"><div class="form-group full"><label>Posizionamento colonnina ricarica</label><input type="text" id="f-pos-colonnina" placeholder="Es. Garage, fianco portone"></div></div>
+          <div class="form-row">
+            <div class="form-group"><label>Calata stringhe</label>
+              <div class="check-group" id="cg-calata">
+                <label class="check-item" onclick="toggleCheck(this,'calata',true)"><input type="checkbox">Esterna</label>
+                <label class="check-item" onclick="toggleCheck(this,'calata',true)"><input type="checkbox">Interna</label>
+                <label class="check-item" onclick="toggleCheck(this,'calata',true)"><input type="checkbox">Necessario forare</label>
+                <label class="check-item" onclick="toggleCheck(this,'calata',true)"><input type="checkbox">Non forare</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row"><div class="form-group full"><label>Note calata stringhe</label><input type="text" id="f-note-calata" placeholder="Percorso cavi..."></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header blue">📶 Connettività e backup</div>
+        <div class="section-body">
+          <div class="form-row">
+            <div class="form-group"><label>Connessione internet WiFi</label>
+              <div class="check-group" id="cg-wifi">
+                <label class="check-item" onclick="toggleCheck(this,'wifi',true)"><input type="checkbox">Forte</label>
+                <label class="check-item" onclick="toggleCheck(this,'wifi',true)"><input type="checkbox">Debole</label>
+                <label class="check-item" onclick="toggleCheck(this,'wifi',true)"><input type="checkbox">Segnale 2.4 GHz</label>
+                <label class="check-item" onclick="toggleCheck(this,'wifi',true)"><input type="checkbox">Via cavo</label>
+                <label class="check-item" onclick="toggleCheck(this,'wifi',true)"><input type="checkbox">Assente</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row"><div class="form-group full"><label>Note connettività</label><input type="text" id="f-note-wifi" placeholder="Es. Router in cucina, segnale debole in garage"></div></div>
+          <div class="form-row">
+            <div class="form-group"><label>Funzione backup</label>
+              <div class="check-group" id="cg-backup">
+                <label class="check-item" onclick="toggleCheck(this,'backup',true)"><input type="checkbox">Tutta la casa</label>
+                <label class="check-item" onclick="toggleCheck(this,'backup',true)"><input type="checkbox">Parziale</label>
+                <label class="check-item" onclick="toggleCheck(this,'backup',true)"><input type="checkbox">Non previsto</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row"><div class="form-group full"><label>Note backup</label><input type="text" id="f-note-backup" placeholder="Es. Solo carichi essenziali"></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header orange">📝 Lavori e chiusura</div>
+        <div class="section-body">
+          <div class="form-row"><div class="form-group full"><label>Eventuali lavori a carico del cliente</label><textarea id="f-lavori-cliente" placeholder="Lavori preparatori..."></textarea></div></div>
+          <div class="form-row">
+            <div class="form-group half"><label>Potenza contatore esistente (kW)</label><input type="number" id="f-pot-contatore" placeholder="Es. 3.3"></div>
+            <div class="form-group half"><label>Stima giorni lavorativi</label><input type="number" id="f-giorni-lavori" placeholder="Es. 2"></div>
+          </div>
+          <div class="form-row"><div class="form-group full"><label>Note riservate (solo ufficio)</label><textarea id="f-note-finali" placeholder="Costi extra, criticità, materiali aggiuntivi..."></textarea></div></div>
+        </div>
+      </div>
+    </div>
+      <!-- SEZIONE FOTO -->
+      <div class="section">
+        <div class="section-header">📷 Foto sopralluogo</div>
+        <div class="section-body">
+          <div id="foto-sections-container">
+            <p style="color:var(--gray);font-size:13px;">Salva prima il sopralluogo per poter aggiungere foto.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <button class="btn-draft" onclick="saveSurvey('bozza')">💾 Salva bozza</button>
+      <button class="btn-save" onclick="saveSurvey('completo')">✅ Completa</button>
+    </div>
+  </div>
+
+  <input type="file" id="foto-file-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotoInput(event)">
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightbox-img" src="" alt="">
+  </div>
+
+  <!-- REPORT -->
+  <div id="report-view" class="view">
+    <div class="report-container">
+      <div class="form-nav no-print">
+        <button class="btn-back" onclick="goBackToDash()">← Indietro</button>
+        <div class="form-title">Report sopralluogo</div>
+        <button class="btn-save" style="margin-left:auto" onclick="window.print()">🖨️ Stampa / PDF</button>
+      </div>
+      <div class="report-doc" id="report-doc"></div>
+    </div>
+  </div>
+
+  <!-- UTENTI (solo admin) -->
+  <div id="users-view" class="view">
+    <div class="users-container">
+      <div class="users-title">👥 Gestione utenti</div>
+      <div class="add-user-form">
+        <div class="add-user-title">Aggiungi collaboratore</div>
+        <div class="form-row">
+          <div class="form-group"><label>Nome</label><input type="text" id="u-name" placeholder="Nome e cognome"></div>
+          <div class="form-group"><label>Email</label><input type="text" id="u-email" placeholder="email@esempio.it"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Password</label><input type="password" id="u-password" placeholder="Min. 6 caratteri"></div>
+          <div class="form-group"><label>Ruolo</label>
+            <select id="u-role">
+              <option value="user">Collaboratore</option>
+              <option value="admin">Amministratore</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-save" onclick="addUser()">Aggiungi utente</button>
+      </div>
+      <div id="users-list"><div class="loader">Caricamento...</div></div>
+    </div>
+  </div>
+
+  <!-- CAMBIO PASSWORD -->
+  <div id="password-view" class="view">
+    <div class="users-container">
+      <div class="users-title">🔑 Cambia password</div>
+      <div class="pwd-form">
+        <div class="form-row"><div class="form-group full"><label>Password attuale</label><input type="password" id="p-current" placeholder="••••••••"></div></div>
+        <div class="form-row"><div class="form-group full"><label>Nuova password</label><input type="password" id="p-new" placeholder="Min. 6 caratteri"></div></div>
+        <div class="form-row"><div class="form-group full"><label>Conferma nuova password</label><input type="password" id="p-confirm" placeholder="••••••••"></div></div>
+        <button class="btn-save" onclick="changePassword()">Aggiorna password</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ELIMINA -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <h3>Elimina sopralluogo</h3>
+    <p>Sei sicuro? L'operazione non può essere annullata.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Annulla</button>
+      <button class="btn-danger" onclick="confirmDelete()">Elimina</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ STATE ══
+let token = sessionStorage.getItem('ftv_token') || null;
+let currentUser = JSON.parse(sessionStorage.getItem('ftv_user') || 'null');
+let surveys = [];
+let editId = null;
+let deleteId = null;
+let currentType = 'residenziale';
+const toggles = {};
+const checks = {};
+
+// ══ API ══
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || 'Errore server');
+  return data;
+}
+
+// ══ AUTH ══
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const password = document.getElementById('l-password').value;
+  const errEl = document.getElementById('login-err');
+  errEl.style.display = 'none';
+  try {
+    const res = await api('POST', '/api/auth/login', { email, password });
+    token = res.token;
+    currentUser = res.user;
+    sessionStorage.setItem('ftv_token', token);
+    sessionStorage.setItem('ftv_user', JSON.stringify(currentUser));
+    startApp();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+}
+document.getElementById('l-password').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogout() {
+  token = null; currentUser = null;
+  sessionStorage.removeItem('ftv_token');
+  sessionStorage.removeItem('ftv_user');
+  document.getElementById('login-view').style.display = 'flex';
+  document.getElementById('app-shell').classList.remove('active');
+}
+
+function startApp() {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('app-shell').classList.add('active');
+  document.getElementById('user-badge').textContent = currentUser.name;
+  if (currentUser.role === 'admin') {
+    document.getElementById('tab-users').style.display = '';
+  }
+  switchTab('dashboard');
+}
+
+// Auto-login se token in sessione
+if (token && currentUser) { startApp(); }
+
+// ══ TABS ══
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.remove('active'));
+  const tabs = ['dashboard','users','password'];
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    if(t.textContent.toLowerCase().includes(tab==='dashboard'?'sopral':tab==='users'?'utent':'password')) t.classList.add('active');
+  });
+  showView(tab+'-view');
+  if(tab==='dashboard') loadSurveys();
+  if(tab==='users') loadUsers();
+}
+
+function showView(id) {
+  document.querySelectorAll('#app-shell .view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goBackToDash() {
+  showView('dashboard-view');
+  loadSurveys();
+}
+
+// ══ TOAST ══
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ══ TOGGLES & CHECKS ══
+function setToggle(key, val) {
+  toggles[key] = val;
+  document.querySelectorAll(`[id^="t-${key}-"]`).forEach(btn => {
+    btn.classList.remove('active-yes','active-no');
+    if(btn.id === `t-${key}-${val}`) btn.classList.add(val==='no'?'active-no':'active-yes');
+  });
+}
+function getToggle(key) { return toggles[key]||''; }
+
+function toggleCheck(el, group, radio=false) {
+  if(radio) {
+    document.querySelectorAll(`#cg-${group} .check-item`).forEach(i=>i.classList.remove('selected'));
+    checks[group]=null;
+  }
+  const was = el.classList.contains('selected');
+  if(was && !radio) {
+    el.classList.remove('selected');
+    if(Array.isArray(checks[group])) checks[group]=checks[group].filter(v=>v!==el.textContent.trim());
+  } else {
+    el.classList.add('selected');
+    if(radio) checks[group]=el.textContent.trim();
+    else { if(!checks[group]) checks[group]=[]; if(!checks[group].includes(el.textContent.trim())) checks[group].push(el.textContent.trim()); }
+  }
+}
+function getChecks(group) { const v=checks[group]; if(!v) return ''; return Array.isArray(v)?v.join(', '):v; }
+function setChecks(group, value, radio=false) {
+  checks[group]=null;
+  document.querySelectorAll(`#cg-${group} .check-item`).forEach(i=>i.classList.remove('selected'));
+  if(!value) return;
+  const vals=radio?[value]:(Array.isArray(value)?value:value.split(', ').map(s=>s.trim()).filter(Boolean));
+  document.querySelectorAll(`#cg-${group} .check-item`).forEach(el=>{
+    if(vals.some(v=>el.textContent.trim()===v)) el.classList.add('selected');
+  });
+  checks[group]=radio?(vals[0]||null):vals;
+}
+
+// ══ TYPE ══
+function setType(type) {
+  currentType=type;
+  document.getElementById('type-res').classList.toggle('active',type==='residenziale');
+  document.getElementById('type-ci').classList.toggle('active',type==='ci');
+  document.getElementById('ci-note').style.display=type==='ci'?'block':'none';
+  document.getElementById('ci-extra-impianto').style.display=type==='ci'?'block':'none';
+}
+
+// ══ FORM READ/WRITE ══
+function readForm() {
+  return {
+    id: editId||('sv_'+Date.now()),
+    type: currentType, status:'bozza',
+    ditta:document.getElementById('f-ditta').value,
+    tecnico:document.getElementById('f-tecnico').value,
+    data:document.getElementById('f-data').value,
+    localita:document.getElementById('f-localita').value,
+    cliente:document.getElementById('f-cliente').value,
+    telefono:document.getElementById('f-telefono').value,
+    fornitura:getToggle('fornitura'),
+    kw:document.getElementById('f-kw').value,
+    pannelli:document.getElementById('f-pannelli').value,
+    inverter:document.getElementById('f-inverter').value,
+    batteria:getToggle('batteria'),
+    accumulo:document.getElementById('f-accumulo').value,
+    ottimizzatori:getToggle('ottimizzatori'),
+    colonnina:getToggle('colonnina'),
+    colonninaModello:document.getElementById('f-colonnina-mod').value,
+    potContrattuale:document.getElementById('f-pot-contrattuale').value,
+    connessioneRete:getChecks('connessione-rete'),
+    cabina:getToggle('cabina'), gse:getToggle('gse'),
+    abitazione:getChecks('abitazione'),
+    piani:getChecks('piani'),
+    altezza:document.getElementById('f-altezza').value,
+    tetto:getChecks('tetto'),
+    copertura:getChecks('copertura'),
+    struttura:getChecks('struttura'),
+    guaina:getToggle('guaina'),
+    statoCopertura:getChecks('stato-copertura'),
+    noteCopertura:document.getElementById('f-note-copertura').value,
+    cesta:getToggle('cesta'),
+    cestaGiorni:document.getElementById('f-cesta-giorni').value,
+    cestaSu:getChecks('cesta-su'),
+    sicurezza:getChecks('sicurezza'),
+    sicurezzaAltro:document.getElementById('f-sicurezza-altro').value,
+    terra:getChecks('terra'),
+    terraSezione:document.getElementById('f-terra-sezione').value,
+    interruttore:getChecks('interruttore'),
+    interruttoreModello:document.getElementById('f-interruttore-mod').value,
+    paMt:document.getElementById('f-pa-mt').value,
+    paSez:document.getElementById('f-pa-sez').value,
+    pbMt:document.getElementById('f-pb-mt').value,
+    invMt:document.getElementById('f-inv-mt').value,
+    m2:getToggle('m2'), m2Sez:document.getElementById('f-m2-sez').value,
+    noteElettrico:document.getElementById('f-note-elettrico').value,
+    panEsis:getToggle('pan-esis'), panEsisNum:document.getElementById('f-pan-esis-num').value, panEsisMod:document.getElementById('f-pan-esis-mod').value,
+    invEsis:getToggle('inv-esis'), invEsisNum:document.getElementById('f-inv-esis-num').value, invEsisMod:document.getElementById('f-inv-esis-mod').value,
+    battEsis:getToggle('batt-esis'), battEsisNum:document.getElementById('f-batt-esis-num').value, battEsisMod:document.getElementById('f-batt-esis-mod').value,
+    posInverter:document.getElementById('f-pos-inverter').value,
+    posBatteria:document.getElementById('f-pos-batteria').value,
+    posColonnina:document.getElementById('f-pos-colonnina').value,
+    calata:getChecks('calata'), noteCalata:document.getElementById('f-note-calata').value,
+    wifi:getChecks('wifi'), noteWifi:document.getElementById('f-note-wifi').value,
+    backup:getChecks('backup'), noteBackup:document.getElementById('f-note-backup').value,
+    lavoriCliente:document.getElementById('f-lavori-cliente').value,
+    potContatore:document.getElementById('f-pot-contatore').value,
+    giorniLavori:document.getElementById('f-giorni-lavori').value,
+    noteFinali:document.getElementById('f-note-finali').value,
+  };
+}
+
+function populateForm(s) {
+  setType(s.type||'residenziale');
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
+  set('f-ditta',s.ditta); set('f-tecnico',s.tecnico); set('f-data',s.data); set('f-localita',s.localita);
+  set('f-cliente',s.cliente); set('f-telefono',s.telefono); set('f-kw',s.kw);
+  set('f-pannelli',s.pannelli); set('f-inverter',s.inverter); set('f-accumulo',s.accumulo);
+  set('f-colonnina-mod',s.colonninaModello); set('f-pot-contrattuale',s.potContrattuale);
+  set('f-altezza',s.altezza); set('f-note-copertura',s.noteCopertura);
+  set('f-cesta-giorni',s.cestaGiorni); set('f-sicurezza-altro',s.sicurezzaAltro);
+  set('f-terra-sezione',s.terraSezione); set('f-interruttore-mod',s.interruttoreModello);
+  set('f-pa-mt',s.paMt); set('f-pa-sez',s.paSez); set('f-pb-mt',s.pbMt); set('f-inv-mt',s.invMt);
+  set('f-m2-sez',s.m2Sez); set('f-note-elettrico',s.noteElettrico);
+  set('f-pan-esis-num',s.panEsisNum); set('f-pan-esis-mod',s.panEsisMod);
+  set('f-inv-esis-num',s.invEsisNum); set('f-inv-esis-mod',s.invEsisMod);
+  set('f-batt-esis-num',s.battEsisNum); set('f-batt-esis-mod',s.battEsisMod);
+  set('f-pos-inverter',s.posInverter); set('f-pos-batteria',s.posBatteria); set('f-pos-colonnina',s.posColonnina);
+  set('f-note-calata',s.noteCalata); set('f-note-wifi',s.noteWifi); set('f-note-backup',s.noteBackup);
+  set('f-lavori-cliente',s.lavoriCliente); set('f-pot-contatore',s.potContatore); set('f-giorni-lavori',s.giorniLavori);
+  set('f-note-finali',s.noteFinali);
+  ['fornitura','batteria','ottimizzatori','colonnina','cabina','gse','guaina','cesta','m2','pan-esis','inv-esis','batt-esis'].forEach(k=>{if(s[k.replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]||toggles[k]) setToggle(k,s[k.replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]||'');});
+  // Manual toggle restore
+  if(s.fornitura) setToggle('fornitura',s.fornitura);
+  if(s.batteria) setToggle('batteria',s.batteria);
+  if(s.ottimizzatori) setToggle('ottimizzatori',s.ottimizzatori);
+  if(s.colonnina) setToggle('colonnina',s.colonnina);
+  if(s.cabina) setToggle('cabina',s.cabina);
+  if(s.gse) setToggle('gse',s.gse);
+  if(s.guaina) setToggle('guaina',s.guaina);
+  if(s.cesta) setToggle('cesta',s.cesta);
+  if(s.m2) setToggle('m2',s.m2);
+  if(s.panEsis) setToggle('pan-esis',s.panEsis);
+  if(s.invEsis) setToggle('inv-esis',s.invEsis);
+  if(s.battEsis) setToggle('batt-esis',s.battEsis);
+  setChecks('connessione-rete',s.connessioneRete||'');
+  setChecks('abitazione',s.abitazione||'',true);
+  setChecks('piani',s.piani||'',true);
+  setChecks('tetto',s.tetto||'',true);
+  setChecks('copertura',s.copertura||'',true);
+  setChecks('struttura',s.struttura||'',true);
+  setChecks('stato-copertura',s.statoCopertura||'',true);
+  setChecks('cesta-su',s.cestaSu||'',true);
+  setChecks('sicurezza',s.sicurezza||'');
+  setChecks('terra',s.terra||'',true);
+  setChecks('interruttore',s.interruttore||'',true);
+  setChecks('calata',s.calata||'',true);
+  setChecks('wifi',s.wifi||'',true);
+  setChecks('backup',s.backup||'',true);
+}
+
+function resetForm() {
+  Object.keys(toggles).forEach(k=>delete toggles[k]);
+  Object.keys(checks).forEach(k=>delete checks[k]);
+  document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active-yes','active-no'));
+  document.querySelectorAll('.check-item').forEach(i=>i.classList.remove('selected'));
+  document.querySelectorAll('input[type="text"],input[type="number"],input[type="date"],textarea').forEach(el=>el.value='');
+  setType('residenziale');
+}
+
+// ══ SURVEYS ══
+async function loadSurveys() {
+  try {
+    surveys = await api('GET', '/api/surveys');
+    renderDashboard();
+  } catch(e) {
+    if(e.message.includes('scaduta')||e.message.includes('autorizzato')) doLogout();
+  }
+}
+
+function renderDashboard() {
+  document.getElementById('stat-total').textContent=surveys.length;
+  document.getElementById('stat-bozza').textContent=surveys.filter(s=>s.status==='bozza').length;
+  document.getElementById('stat-completo').textContent=surveys.filter(s=>s.status==='completo').length;
+  renderCards(document.getElementById('search-input').value);
+}
+
+function renderCards(q='') {
+  const list=document.getElementById('card-list');
+  const filtered=surveys.filter(s=>{
+    if(!q) return true;
+    return `${s.cliente} ${s.tecnico} ${s.localita} ${s.ditta} ${s.createdByName}`.toLowerCase().includes(q.toLowerCase());
+  });
+  if(!filtered.length){
+    list.innerHTML=`<div class="empty-state"><div class="icon">${surveys.length?'🔍':'📋'}</div><p>${surveys.length?'Nessun risultato':'Nessun sopralluogo.<br>Crea il primo!'}</p></div>`;
+    return;
+  }
+  list.innerHTML=filtered.map(s=>{
+    const dateFmt=s.data?new Date(s.data+'T12:00:00').toLocaleDateString('it-IT'):'—';
+    const typeBadge=s.type==='ci'?'<span class="card-badge badge-ci">C&I</span>':'<span class="card-badge badge-residenziale">Residenziale</span>';
+    const statusBadge=s.status==='completo'?'<span class="card-badge badge-completo">✅ Completo</span>':'<span class="card-badge badge-bozza">📝 Bozza</span>';
+    return `<div class="survey-card" onclick="viewReport('${s.id}')">
+      <div class="card-main">
+        <div class="card-client">${s.cliente||'(cliente non inserito)'}</div>
+        <div class="card-meta">${typeBadge}${statusBadge} 📅 ${dateFmt} · 📍 ${s.localita||'—'} · 👤 ${s.tecnico||s.createdByName||'—'}${s.kw?' · ⚡ '+s.kw+' kW':''}</div>
+      </div>
+      <div class="card-actions" onclick="event.stopPropagation()">
+        <button class="btn-icon" title="Report" onclick="viewReport('${s.id}')">📄</button>
+        <button class="btn-icon" title="Modifica" onclick="editSurvey('${s.id}')">✏️</button>
+        <button class="btn-icon danger" title="Elimina" onclick="openDeleteModal('${s.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function newSurvey() {
+  editId=null; currentPhotos=[];
+  resetForm();
+  document.getElementById('form-view-title').textContent='Nuovo sopralluogo';
+  document.getElementById('f-data').value=new Date().toISOString().split('T')[0];
+  showView('form-view');
+  loadFotoSection();
+  window.scrollTo(0,0);
+}
+
+function editSurvey(id) {
+  const s=surveys.find(sv=>sv.id===id); if(!s) return;
+  editId=id; currentPhotos=[];
+  resetForm(); populateForm(s);
+  document.getElementById('form-view-title').textContent='Modifica sopralluogo';
+  showView('form-view');
+  loadFotoSection();
+  window.scrollTo(0,0);
+}
+
+async function saveSurvey(status) {
+  const data=readForm(); data.status=status;
+  try {
+    if(editId) { await api('PUT','/api/surveys/'+editId,data); }
+    else {
+      const res = await api('POST','/api/surveys',data);
+      editId = res.id; // ora abbiamo l'ID → le foto possono essere aggiunte
+    }
+    showToast(status==='completo'?'✅ Sopralluogo completato!':'💾 Bozza salvata');
+    await loadSurveys();
+    loadFotoSection(); // ricarica sezione foto (ora editId è disponibile)
+  } catch(e) { showToast('❌ Errore: '+e.message); }
+}
+
+async function viewReport(id) {
+  const s=surveys.find(sv=>sv.id===id); if(!s) return;
+  let photos=[];
+  try { photos=await api('GET','/api/photos/survey/'+id); } catch(e){}
+  renderReport(s, photos); showView('report-view'); window.scrollTo(0,0);
+}
+
+// ══ DELETE ══
+function openDeleteModal(id) { deleteId=id; document.getElementById('delete-modal').classList.add('active'); }
+function closeModal() { document.getElementById('delete-modal').classList.remove('active'); deleteId=null; }
+async function confirmDelete() {
+  try { await api('DELETE','/api/surveys/'+deleteId); closeModal(); showToast('🗑️ Eliminato'); await loadSurveys(); }
+  catch(e) { showToast('❌ '+e.message); }
+}
+
+// ══ USERS ══
+async function loadUsers() {
+  if(currentUser?.role!=='admin') return;
+  try {
+    const users=await api('GET','/api/users');
+    document.getElementById('users-list').innerHTML=users.map(u=>`
+      <div class="user-row">
+        <div class="user-info">
+          <div class="user-name">${u.name} <span class="role-badge ${u.role==='admin'?'role-admin':'role-user'}">${u.role==='admin'?'Admin':'Collaboratore'}</span></div>
+          <div class="user-email">${u.email}</div>
+        </div>
+        ${u.id!==currentUser.id?`<button class="btn-icon danger" onclick="deleteUser('${u.id}','${u.name}')">🗑️</button>`:'<span style="font-size:12px;color:var(--gray)">tu</span>'}
+      </div>`).join('');
+  } catch(e) { showToast('❌ '+e.message); }
+}
+
+async function addUser() {
+  const name=document.getElementById('u-name').value.trim();
+  const email=document.getElementById('u-email').value.trim();
+  const password=document.getElementById('u-password').value;
+  const role=document.getElementById('u-role').value;
+  try {
+    await api('POST','/api/users',{name,email,password,role});
+    document.getElementById('u-name').value='';
+    document.getElementById('u-email').value='';
+    document.getElementById('u-password').value='';
+    showToast('✅ Utente aggiunto');
+    loadUsers();
+  } catch(e) { showToast('❌ '+e.message); }
+}
+
+async function deleteUser(id, name) {
+  if(!confirm(`Eliminare l'utente ${name}?`)) return;
+  try { await api('DELETE','/api/users/'+id); showToast('🗑️ Utente eliminato'); loadUsers(); }
+  catch(e) { showToast('❌ '+e.message); }
+}
+
+// ══ CHANGE PASSWORD ══
+async function changePassword() {
+  const cur=document.getElementById('p-current').value;
+  const nw=document.getElementById('p-new').value;
+  const cf=document.getElementById('p-confirm').value;
+  if(nw!==cf){showToast('❌ Le password non coincidono');return;}
+  try {
+    await api('POST','/api/auth/change-password',{currentPassword:cur,newPassword:nw});
+    document.getElementById('p-current').value='';
+    document.getElementById('p-new').value='';
+    document.getElementById('p-confirm').value='';
+    showToast('✅ Password aggiornata');
+  } catch(e) { showToast('❌ '+e.message); }
+}
+
+// ══ FOTO ══
+const FOTO_CATEGORIE = [
+  { id:'edificio',  label:'🏠 Edificio (4 lati e dintorni)' },
+  { id:'tetto',     label:'🏗️ Tetto / Falde' },
+  { id:'copertura', label:'🧱 Copertura / Sotto tegola' },
+  { id:'quadro',    label:'⚡ Quadro elettrico' },
+  { id:'contatore', label:'🔌 Contatore E-distribuzione' },
+  { id:'inverter',  label:'📦 Locale inverter / Batteria' },
+  { id:'cavi_sol',  label:'☀️ Percorso cavi solari' },
+  { id:'cavi_ac',   label:'🔋 Percorso cavi AC' },
+  { id:'esistenti', label:'♻️ Apparati esistenti' },
+  { id:'altro',     label:'📷 Altro' },
+];
+
+let currentPhotos = [];
+let pendingPhotoCategory = null;
+let lightboxPhotos = [];
+
+function compressImage(file, maxW=1280, quality=0.78) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let w=img.width, h=img.height;
+        if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+        const canvas=document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function loadFotoSection() {
+  const container = document.getElementById('foto-sections-container');
+  if (!container) return;
+  if (!editId) {
+    container.innerHTML = '<p style="color:var(--gray);font-size:13px;">Salva prima il sopralluogo per poter aggiungere foto.</p>';
+    return;
+  }
+  try {
+    currentPhotos = await api('GET', '/api/photos/survey/' + editId);
+  } catch(e) { currentPhotos = []; }
+  renderFotoSection();
+}
+
+function renderFotoSection() {
+  const container = document.getElementById('foto-sections-container');
+  if (!container) return;
+  container.innerHTML = FOTO_CATEGORIE.map(cat => {
+    const photos = currentPhotos.filter(p => p.category === cat.id);
+    const thumbs = photos.map(p => `
+      <div class="foto-thumb">
+        <img src="${p.url}" onclick="openLightbox('${p.id}')" title="${p.nota||''}">
+        ${p.nota ? `<div class="nota-tag">${p.nota}</div>` : ''}
+        <button class="del-btn" onclick="deleteFoto('${p.id}')">✕</button>
+      </div>`).join('');
+    return `
+    <div class="foto-cat">
+      <div class="foto-cat-header">
+        <span>${cat.label}</span>
+        ${photos.length ? `<span class="foto-cat-count">${photos.length}</span>` : ''}
+      </div>
+      <div class="foto-cat-body">
+        ${photos.length ? `<div class="foto-grid">${thumbs}</div>` : ''}
+        ${cat.id==='altro' ? `<input class="foto-nota-input" id="nota-altro" placeholder="Descrizione (es. prospetto nord, dettaglio gronda...)">` : ''}
+        <button class="btn-add-foto" onclick="openFotoInput('${cat.id}')">📷 Aggiungi foto</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openFotoInput(catId) {
+  pendingPhotoCategory = catId;
+  const el = document.getElementById('foto-file-input');
+  el.value = ''; el.click();
+}
+
+async function handlePhotoInput(event) {
+  if (!editId) { showToast('❌ Salva prima il sopralluogo'); return; }
+  const files = [...event.target.files];
+  if (!files.length) return;
+  const nota = pendingPhotoCategory==='altro'
+    ? (document.getElementById('nota-altro')?.value?.trim()||'') : '';
+  showToast('⏳ Caricamento foto...');
+  for (const file of files) {
+    try {
+      const blob = await compressImage(file);
+      const fd = new FormData();
+      fd.append('file', blob, 'foto.jpg');
+      fd.append('surveyId', editId);
+      fd.append('category', pendingPhotoCategory);
+      fd.append('nota', nota);
+      const token = sessionStorage.getItem('ftv_token');
+      const res = await fetch('/api/photos', {
+        method:'POST',
+        headers:{ 'Authorization':'Bearer '+token },
+        body: fd
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      currentPhotos.push({ id:data.id, survey_id:editId, category:pendingPhotoCategory, nota, url:data.url });
+    } catch(e) { showToast('❌ Errore: '+e.message); }
+  }
+  renderFotoSection();
+  showToast(`📷 ${files.length>1 ? files.length+' foto aggiunte' : 'Foto aggiunta'}`);
+}
+
+async function deleteFoto(photoId) {
+  try {
+    await api('DELETE', '/api/photos/'+photoId);
+    currentPhotos = currentPhotos.filter(p => p.id !== photoId);
+    renderFotoSection();
+  } catch(e) { showToast('❌ '+e.message); }
+}
+
+function openLightbox(photoId) {
+  const p = currentPhotos.find(ph => ph.id === photoId);
+  if (!p) return;
+  document.getElementById('lightbox-img').src = p.url;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lightbox-img').src = '';
+}
+
+// ══ REPORT ══
+function row(label,value,cls=''){if(!value)return'';return`<tr><th>${label}</th><td class="rv ${cls}">${value}</td></tr>`;}
+function yesno(val){if(!val)return'—';if(val==='si')return'<span class="rv yes">✅ Sì</span>';if(val==='no')return'<span class="rv no">❌ No</span>';return val;}
+
+function renderReport(s, photos=[]) {
+  const dateFmt=s.data?new Date(s.data+'T12:00:00').toLocaleDateString('it-IT'):'—';
+  const typeLabel=s.type==='ci'?'Commerciale / Industriale':'Residenziale';
+  document.getElementById('report-doc').innerHTML=`
+  <div class="report-logo-row">
+    <div><div class="report-logo">☀️ Sopralluogo FTV <span>MODULO SOPRALLUOGO PER IMPIANTO FOTOVOLTAICO</span></div></div>
+    <div class="report-title-right"><div>${typeLabel}</div><div style="font-size:11px;color:var(--gray)">VERS. 2026-1</div></div>
+  </div>
+  <div class="report-section-title">📋 Informazioni generali</div>
+  <table class="report-table">
+    ${row('Ditta committente',s.ditta)}${row('Nome tecnico',s.tecnico)}
+    ${row('Data sopralluogo',dateFmt)}${row('Località',s.localita)}
+    ${row('Cliente',s.cliente)}${row('Telefono',s.telefono)}
+    ${s.createdByName?row('Inserito da',s.createdByName):''}
+  </table>
+  <div class="report-section-title">⚡ Impianto proposto</div>
+  <table class="report-table">
+    ${row('Tipo fornitura',s.fornitura?s.fornitura.charAt(0).toUpperCase()+s.fornitura.slice(1):'')}
+    ${row('Potenza totale',s.kw?s.kw+' kW':'')}
+    ${row('Pannelli',s.pannelli)}${row('Inverter',s.inverter)}
+    ${row('Batteria',yesno(s.batteria))}${s.batteria==='si'?row('Potenza accumulo',s.accumulo):''}
+    ${row('Ottimizzatori',yesno(s.ottimizzatori))}
+    ${row('Colonnina ricarica',yesno(s.colonnina))}${s.colonnina==='si'?row('Modello colonnina',s.colonninaModello):''}
+    ${s.type==='ci'?row('Potenza contrattuale',s.potContrattuale?s.potContrattuale+' kW':''):''}
+    ${s.type==='ci'?row('Connessione rete',s.connessioneRete):''}
+    ${s.type==='ci'?row('Cabina MT/BT',yesno(s.cabina)):''}
+    ${s.type==='ci'?row('Accordo GSE',s.gse?(s.gse==='ssp'?'Scambio sul posto':'Ritiro dedicato'):''):''}
+  </table>
+  <div class="report-section-title">🏠 Abitazione e copertura</div>
+  <table class="report-table">
+    ${row('Tipo abitazione',s.abitazione)}${row('Numero piani',s.piani)}
+    ${row('Altezza grondaia',s.altezza?s.altezza+' mt':'')}
+    ${row('Tipo tetto',s.tetto)}${row('Tipo copertura',s.copertura)}
+    ${row('Tipo struttura',s.struttura)}${row('Guaina',yesno(s.guaina))}
+    ${row('Stato copertura',s.statoCopertura)}${row('Note copertura',s.noteCopertura)}
+  </table>
+  <div class="report-section-title orange">🦺 Messa in sicurezza</div>
+  <table class="report-table">
+    ${row('Utilizzo cesta',yesno(s.cesta))}${s.cesta==='si'?row('Giorni cesta',s.cestaGiorni):''}
+    ${row('Cesta su',s.cestaSu)}${row('Attrezzatura',s.sicurezza)}${row('Altro',s.sicurezzaAltro)}
+  </table>
+  <div class="report-section-title blue">🔌 Impianto elettrico</div>
+  <table class="report-table">
+    ${row('Impianto di terra',s.terra)}${row('Sezione terra',s.terraSezione?s.terraSezione+' mm²':'')}
+    ${row('Interruttore generale',s.interruttore)}${row('Modello interruttore',s.interruttoreModello)}
+  </table>
+  <div style="margin-bottom:8px"><strong style="font-size:13px;color:var(--gray)">SCHEMA SEMPLIFICATO IMPIANTO</strong></div>
+  <table class="report-table" style="margin-bottom:16px">
+    <tr><th>ENEL → Q.Gen. Abitaz.<br><small>Distanza / Sez. cavo</small></th><td>${s.paMt||'—'} mt &nbsp;|&nbsp; ${s.paSez||'—'} mm²</td></tr>
+    <tr><th>Q.Gen. → Inverter<br><small>Distanza</small></th><td>${s.pbMt||'—'} mt</td></tr>
+    <tr><th>Inverter → Pannelli FTV<br><small>Distanza</small></th><td>${s.invMt||'—'} mt</td></tr>
+    <tr><th>Contatore M2</th><td>${yesno(s.m2)}${s.m2Sez?' &nbsp;|&nbsp; Sez. '+s.m2Sez+' mm²':''}</td></tr>
+  </table>
+  ${s.noteElettrico?`<table class="report-table" style="margin-bottom:16px">${row('Note impianto elettrico',s.noteElettrico)}</table>`:''}
+  <div class="report-section-title">🔁 Apparati esistenti</div>
+  <table class="report-table">
+    <tr><th>Pannelli esistenti</th><td>${yesno(s.panEsis)}${s.panEsisNum?' — n° '+s.panEsisNum:''}${s.panEsisMod?' — '+s.panEsisMod:''}</td></tr>
+    <tr><th>Inverter esistente</th><td>${yesno(s.invEsis)}${s.invEsisNum?' — n° '+s.invEsisNum:''}${s.invEsisMod?' — '+s.invEsisMod:''}</td></tr>
+    <tr><th>Batteria esistente</th><td>${yesno(s.battEsis)}${s.battEsisNum?' — n° '+s.battEsisNum:''}${s.battEsisMod?' — '+s.battEsisMod:''}</td></tr>
+  </table>
+  <div class="report-section-title">📍 Posizionamenti e logistica</div>
+  <table class="report-table">
+    ${row('Pos. nuovo inverter',s.posInverter)}${row('Pos. nuova batteria',s.posBatteria)}
+    ${row('Pos. colonnina',s.posColonnina)}${row('Calata stringhe',s.calata)}${row('Note calata',s.noteCalata)}
+  </table>
+  <div class="report-section-title blue">📶 Connettività e backup</div>
+  <table class="report-table">
+    ${row('Connessione internet',s.wifi)}${row('Note connettività',s.noteWifi)}
+    ${row('Funzione backup',s.backup)}${row('Note backup',s.noteBackup)}
+  </table>
+  <div class="report-section-title orange">📝 Lavori e chiusura</div>
+  <table class="report-table">
+    ${row('Lavori a carico cliente',s.lavoriCliente)}
+    ${row('Potenza contatore',s.potContatore?s.potContatore+' kW':'')}
+    ${row('Stima giorni',s.giorniLavori)}
+    ${row('Note riservate (ufficio)',s.noteFinali)}
+  </table>
+  ${photos.length ? (() => {
+    const catsWithPhotos = FOTO_CATEGORIE.filter(c => photos.some(p => p.category === c.id));
+    if (!catsWithPhotos.length) return '';
+    return `<div class="report-section-title">📷 Foto sopralluogo</div>` +
+      catsWithPhotos.map(cat => {
+        const cp = photos.filter(p => p.category === cat.id);
+        return `<div style="margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:600;color:var(--gray);margin-bottom:8px;">${cat.label} (${cp.length})</div>
+          <div class="report-foto-grid">${cp.map(p=>`
+            <div style="break-inside:avoid;">
+              <img src="${p.url}" style="width:100%;border-radius:6px;border:1px solid #ddd;">
+              ${p.nota?`<div style="font-size:11px;color:var(--gray);margin-top:3px;text-align:center;">${p.nota}</div>`:''}
+            </div>`).join('')}
+          </div></div>`;
+      }).join('');
+  })() : ''}
+  <div class="sign-row">
+    <div class="sign-box"><div class="sign-label">Data: ${dateFmt}</div></div>
+    <div class="sign-box"><div class="sign-label">Firma Tecnico</div><div class="sign-line"></div></div>
+    <div class="sign-box"><div class="sign-label">Firma Cliente</div><div class="sign-line"></div></div>
+  </div>`;
+}
+</script>
+</body>
+</html>
