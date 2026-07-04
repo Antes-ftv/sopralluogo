@@ -1284,112 +1284,65 @@ function yesno(val){if(!val)return'—';if(val==='si')return'<span class="rv yes
 
 function renderReport(s, photos=[]) {
   const dateFmt=s.data?new Date(s.data+'T12:00:00').toLocaleDateString('it-IT'):'—';
-  const typeLabel=s.type==='ci'?'Commerciale / Industriale':'Residenziale';
-  document.getElementById('report-doc').innerHTML=`
-  <div class="report-logo-row">
-    <div><div class="report-logo">☀️ Sopralluogo FTV <span>MODULO SOPRALLUOGO PER IMPIANTO FOTOVOLTAICO</span></div></div>
-    <div class="report-title-right"><div>${typeLabel}</div><div style="font-size:11px;color:var(--gray)">VERS. 2026-1</div></div>
-  </div>
-  <div class="report-section-title">📋 Informazioni generali</div>
-  <table class="report-table">
-    ${row('Ditta committente',s.ditta)}${row('Nome tecnico',s.tecnico)}
-    ${row('Data sopralluogo',dateFmt)}${row('Località',s.localita)}
-    ${row('Cliente',s.cliente)}${row('Telefono',s.telefono)}
-    ${s.createdByName?row('Inserito da',s.createdByName):''}
-  </table>
-  <div class="report-section-title">⚡ Impianto proposto</div>
-  <table class="report-table">
-    ${row('Tipo fornitura',s.fornitura?s.fornitura.charAt(0).toUpperCase()+s.fornitura.slice(1):'')}
-    ${row('Potenza totale',s.kw?s.kw+' kW':'')}
-    ${row('Pannelli',s.pannelli)}${row('Inverter',s.inverter)}
-    ${row('Batteria',yesno(s.batteria))}${s.batteria==='si'?row('Potenza accumulo',s.accumulo):''}
-    ${row('Ottimizzatori',yesno(s.ottimizzatori))}
-    ${row('Colonnina ricarica',yesno(s.colonnina))}${s.colonnina==='si'?row('Modello colonnina',s.colonninaModello):''}
-    ${s.type==='ci'?row('Potenza contrattuale',s.potContrattuale?s.potContrattuale+' kW':''):''}
-    ${s.type==='ci'?row('Connessione rete',s.connessioneRete):''}
-    ${s.type==='ci'?row('Cabina MT/BT',yesno(s.cabina)):''}
-    ${s.type==='ci'?row('Accordo GSE',s.gse?(s.gse==='ssp'?'Scambio sul posto':'Ritiro dedicato'):''):''}
-  </table>
-  <div class="report-section-title">🏠 Abitazione e copertura</div>
-  <table class="report-table">
-    ${row('Tipo abitazione',s.abitazione)}${row('Numero piani',s.piani)}
-    ${row('Altezza grondaia',s.altezza?s.altezza+' mt':'')}
-    ${row('Tipo tetto',s.tetto)}${row('Tipo copertura',s.copertura)}
-    ${row('Tipo struttura',s.struttura)}${row('Guaina',yesno(s.guaina))}
-    ${row('Stato copertura',s.statoCopertura)}${row('Note copertura',s.noteCopertura)}
-  </table>
-  <div class="report-section-title orange">🦺 Messa in sicurezza</div>
-  <table class="report-table">
-    ${row('Utilizzo cesta',yesno(s.cesta))}${s.cesta==='si'?row('Giorni cesta',s.cestaGiorni):''}
-    ${row('Cesta su',s.cestaSu)}${row('Attrezzatura',s.sicurezza)}${row('Altro',s.sicurezzaAltro)}
-  </table>
-  <div class="report-section-title blue">🔌 Impianto elettrico</div>
-  <table class="report-table">
-    ${row('Impianto di terra',s.terra)}${row('Sezione terra',s.terraSezione?s.terraSezione+' mm²':'')}
-    ${row('Interruttore generale',s.interruttore)}${row('Modello interruttore',s.interruttoreModello)}
-  </table>
-  <div style="margin-bottom:8px"><strong style="font-size:13px;color:var(--gray)">SCHEMA SEMPLIFICATO IMPIANTO</strong></div>
-  <table class="report-table" style="margin-bottom:16px">
-    <tr><th>ENEL → Q.Gen. Abitaz.<br><small>Distanza / Sez. cavo</small></th><td>${s.paMt||'—'} mt &nbsp;|&nbsp; ${s.paSez||'—'} mm²</td></tr>
-    <tr><th>Q.Gen. → Inverter<br><small>Distanza</small></th><td>${s.pbMt||'—'} mt</td></tr>
-    <tr><th>Inverter → Pannelli FTV<br><small>Distanza</small></th><td>${s.invMt||'—'} mt</td></tr>
-    <tr><th>Contatore M2</th><td>${yesno(s.m2)}${s.m2Sez?' &nbsp;|&nbsp; Sez. '+s.m2Sez+' mm²':''}</td></tr>
-  </table>
-  ${s.noteElettrico?`<table class="report-table" style="margin-bottom:16px">${row('Note impianto elettrico',s.noteElettrico)}</table>`:''}
-  <div class="report-section-title">🔁 Apparati esistenti</div>
-  <table class="report-table">
-    <tr><th>Pannelli esistenti</th><td>${yesno(s.panEsis)}${s.panEsisNum?' — n° '+s.panEsisNum:''}${s.panEsisMod?' — '+s.panEsisMod:''}</td></tr>
-    <tr><th>Inverter esistente</th><td>${yesno(s.invEsis)}${s.invEsisNum?' — n° '+s.invEsisNum:''}${s.invEsisMod?' — '+s.invEsisMod:''}</td></tr>
-    <tr><th>Batteria esistente</th><td>${yesno(s.battEsis)}${s.battEsisNum?' — n° '+s.battEsisNum:''}${s.battEsisMod?' — '+s.battEsisMod:''}</td></tr>
-  </table>
-  <div class="report-section-title">📍 Posizionamenti e logistica</div>
-  <table class="report-table">
-    ${row('Pos. nuovo inverter',s.posInverter)}${row('Pos. nuova batteria',s.posBatteria)}
-    ${row('Pos. colonnina',s.posColonnina)}${row('Percorso calata',s.calataPercorso)}${row('Foratura',s.calataForatura)}${row('Note calata',s.noteCalata)}
-  </table>
-  <div class="report-section-title orange">☀️ Linea DC (Pannelli → Inverter)</div>
-  <table class="report-table">
-    ${row('Distanza',s.dcMt?s.dcMt+' mt':'')}${row('Sezione cavo',s.dcSez?s.dcSez+' mm²':'')}
-    ${row('Percorso',s.dcPercorso)}${row('Note',s.noteDc)}
-  </table>
-  <div class="report-section-title blue">⚡ Linea AC (Inverter → Quadro)</div>
-  <table class="report-table">
-    ${row('Distanza',s.acMt?s.acMt+' mt':'')}${row('Sezione cavo',s.acSez?s.acSez+' mm²':'')}
-    ${row('Percorso',s.acPercorso)}${row('Note',s.noteAc)}
-  </table>
-  <div class="report-section-title blue">📶 Connettività e backup</div>
-  <table class="report-table">
-    ${row('Connessione internet',s.wifi)}${row('Note connettività',s.noteWifi)}
-    ${row('Funzione backup',s.backup)}${row('Note backup',s.noteBackup)}
-  </table>
-  <div class="report-section-title orange">📝 Lavori e chiusura</div>
-  <table class="report-table">
-    ${row('Lavori a carico cliente',s.lavoriCliente)}
-    ${row('Potenza contatore',s.potContatore?s.potContatore+' kW':'')}
-    ${row('Stima giorni',s.giorniLavori)}
-    ${row('Note riservate (ufficio)',s.noteFinali)}
-  </table>
-  ${photos.length ? (() => {
-    const catsWithPhotos = FOTO_CATEGORIE.filter(c => photos.some(p => p.category === c.id));
-    if (!catsWithPhotos.length) return '';
-    return `<div class="report-section-title">📷 Foto sopralluogo</div>` +
-      catsWithPhotos.map(cat => {
-        const cp = photos.filter(p => p.category === cat.id);
-        return `<div style="margin-bottom:16px;">
-          <div style="font-size:13px;font-weight:600;color:var(--gray);margin-bottom:8px;">${cat.label} (${cp.length})</div>
-          <div class="report-foto-grid">${cp.map(p=>`
-            <div style="break-inside:avoid;">
-              <img src="${p.url}" style="width:100%;border-radius:6px;border:1px solid #ddd;">
-              ${p.nota?`<div style="font-size:11px;color:var(--gray);margin-top:3px;text-align:center;">${p.nota}</div>`:''}
-            </div>`).join('')}
-          </div></div>`;
+  let subtitle = 'IMPIANTO FOTOVOLTAICO';
+  if(s.batteria==='si') subtitle += ' + SISTEMA DI ACCUMULO';
+  if(s.colonnina==='si') subtitle += ' + WALLBOX';
+  const td = (label,val) => val?`<tr><td style="border:1px solid #cfd8dc;padding:8px 12px;font-weight:700;width:40%;font-size:13px;">${label}</td><td style="border:1px solid #cfd8dc;padding:8px 12px;font-size:13px;">${val}</td></tr>`:'';
+  const sH = (num,title) => `<div style="font-size:17px;font-weight:800;color:#2e7d32;border-bottom:2px solid #2e7d32;padding-bottom:4px;margin:28px 0 14px;">${num}. ${title}</div>`;
+  const tHead = (label) => `<div style="background:#2e7d32;color:white;padding:7px 12px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-radius:4px 4px 0 0;">${label}</div>`;
+  const tWrap = (rows) => `<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">${rows}</table>`;
+  const abType=(s.abitazione||'').toLowerCase();
+  const struttura=(s.struttura||'').toLowerCase();
+  const stato=(s.statoCopertura||'').replace(/[^\w\s]/g,'').trim().toLowerCase();
+  const guaina=s.guaina==='si'?'con guaina impermeabilizzante':s.guaina==='no'?'senza guaina impermeabilizzante':'';
+  const coperType=(s.tetto||'').toLowerCase(); const coperMat=(s.copertura||'').toLowerCase();
+  let narrative='';
+  if(abType||s.localita){
+    narrative=`L'immobile oggetto dell'installazione è ${abType?'un '+abType:'un edificio'} ${s.piani?'di '+s.piani+' piani':''} ubicato in ${s.localita||'—'}.`;
+    if(struttura) narrative+=` Il solaio è in ${struttura}.`;
+    if(coperType||coperMat) narrative+=` La copertura è di tipo ${coperType}${coperMat?' con '+coperMat:''}${stato?' in stato '+stato+' di conservazione':''}${guaina?', '+guaina:''}.`;
+    if(s.noteCopertura) narrative+=' '+s.noteCopertura;
+  }
+  const paMtSez=[s.paMt?s.paMt+' mt':'',s.paSez?s.paSez+' mm²':''].filter(Boolean).join(' · ');
+  const box=(c,label,sub)=>`<div style="flex:1;background:${c==='g'?'#e8f5e9':'#e3f2fd'};border:1.5px solid ${c==='g'?'#2e7d32':'#1565c0'};border-radius:6px;padding:10px 6px;text-align:center;font-size:11px;font-weight:700;color:${c==='g'?'#2e7d32':'#1565c0'};">${label}${sub?'<div style="font-size:10px;font-weight:400;margin-top:3px;">'+sub+'</div>':''}</div>`;
+  const arr=`<div style="display:flex;align-items:center;padding:0 5px;color:#1565c0;font-size:20px;font-weight:700;">→</div>`;
+  const schema=`<div style="display:flex;align-items:center;margin:14px 0 18px;">${box('b','ENEL',paMtSez||null)}${arr}${box('b','Q. GEN.<br>ABITAZIONE',s.pbMt?s.pbMt+' mt':null)}${arr}${box('b','INVERTER<br>GEN. FTV',s.invMt?s.invMt+' mt':null)}${arr}${box('g','PANNELLI FV',s.pannelli||null)}</div>`;
+  let fotoHtml=''; let secNum=3;
+  if(photos.length){
+    const cats=FOTO_CATEGORIE.filter(c=>photos.some(p=>p.category===c.id));
+    if(cats.length){
+      let figN=1; fotoHtml=sH(secNum++,'RILIEVO FOTOGRAFICO');
+      fotoHtml+=cats.map((cat,ci)=>{
+        const cp=photos.filter(p=>p.category===cat.id);
+        const catL=cat.label.replace(/[\u{1F300}-\u{1FFFF}]/gu,'').trim();
+        const imgs=cp.map(p=>{
+          const fig=figN++;
+          return `<div style="text-align:center;break-inside:avoid;margin-bottom:14px;"><img src="${p.url}" style="max-width:75%;border-radius:4px;border:1px solid #cfd8dc;display:block;margin:0 auto;"><div style="font-size:11px;font-style:italic;color:#546e7a;margin-top:5px;">Fig. ${fig} – ${catL}${p.nota?' — '+p.nota:''}</div></div>`;
+        }).join('');
+        return `<div style="margin-bottom:20px;"><div style="font-size:14px;font-weight:700;color:#2e7d32;border-left:4px solid #2e7d32;padding-left:10px;margin:16px 0 12px;">${ci+1 < 10?'3.'+(ci+1)+' ':''}${catL}</div>${imgs}</div>`;
       }).join('');
-  })() : ''}
-  <div class="sign-row">
-    <div class="sign-box"><div class="sign-label">Data: ${dateFmt}</div></div>
-    <div class="sign-box"><div class="sign-label">Firma Tecnico</div><div class="sign-line"></div></div>
-    <div class="sign-box"><div class="sign-label">Firma Cliente</div><div class="sign-line"></div></div>
-  </div>`;
+    }
+  }
+  const sn=secNum;
+  document.getElementById('report-doc').innerHTML=`
+  <div style="text-align:center;padding-bottom:24px;border-bottom:3px solid #2e7d32;margin-bottom:24px;">
+    <div style="font-size:28px;font-weight:900;color:#2e7d32;letter-spacing:3px;margin-bottom:8px;">ANTES SRL</div>
+    <div style="font-size:22px;font-weight:800;color:#263238;margin-bottom:4px;">RELAZIONE DI SOPRALLUOGO</div>
+    <div style="font-size:13px;font-weight:600;color:#546e7a;letter-spacing:.5px;">${subtitle}</div>
+  </div>
+  ${tHead('DATI DEL SOPRALLUOGO')}${tWrap(td('Cliente',s.cliente)+td('Indirizzo',s.localita)+td('Data sopralluogo',dateFmt)+td('Tecnico incaricato',s.tecnico)+td('Contatto',s.telefono?'Tel. '+s.telefono:''))}
+  ${sH(1,"DATI IMPIANTO PROPOSTO")}${tHead('COMPONENTI IMPIANTO')}${tWrap(td('Tipo di rete',s.fornitura?s.fornitura.charAt(0).toUpperCase()+s.fornitura.slice(1):'')+td('Potenza totale impianto',s.kw?s.kw+' kWp':'')+td('Pannelli fotovoltaici',s.pannelli)+td('Inverter',s.inverter)+td('Sistema di accumulo',s.batteria==='si'?'SI'+(s.accumulo?' - '+s.accumulo:''):s.batteria==='no'?'NO':'')+td('Colonnina ricarica (Wallbox)',s.colonnina==='si'?'SI'+(s.colonninaModello?' - '+s.colonninaModello:''):s.colonnina==='no'?'NO':'')+td('Ottimizzatori di potenza',s.ottimizzatori==='si'?'SI':s.ottimizzatori==='no'?'NO':'')+td('Funzione backup',s.backup||''))}
+  ${sH(2,"DESCRIZIONE DELL'EDIFICIO")}${narrative?`<p style="font-size:13px;line-height:1.7;margin-bottom:14px;text-align:justify;">${narrative}</p>`:''}${tHead('CARATTERISTICHE EDIFICIO')}${tWrap(td('Tipo di abitazione',s.abitazione)+td('Numero di piani',s.piani)+td('Altezza grondaia',s.altezza?s.altezza+' mt':'')+td('Tipo di tetto',s.tetto)+td('Tipo di copertura',s.copertura)+td('Solaio',s.struttura)+td('Guaina impermeabilizzante',s.guaina==='si'?'SI':s.guaina==='no'?'NO':'')+td('Stato della copertura',(s.statoCopertura||'').replace(/[^\w\s]/g,'').trim().toUpperCase()))}
+  ${fotoHtml}
+  ${sH(sn,"SCHEMA SEMPLIFICATO DELL'IMPIANTO")}<p style="font-size:13px;margin-bottom:10px;">Schema dell'impianto fotovoltaico rilevato durante il sopralluogo.</p>${schema}${tWrap(td('Potenza contatore esistente',s.potContatore?s.potContatore+' kW':'')+td('Impianto di terra esistente',s.terra?s.terra+(s.terraSezione?' — Sez. '+s.terraSezione+' mm²':''):'')+td('Interruttore generale',s.interruttore?s.interruttore+(s.interruttoreModello?' — '+s.interruttoreModello:''):'')+((s.acMt||s.acSez)?td('Linea AC',(s.acMt?s.acMt+' mt':'')+(s.acSez?' — Sez. '+s.acSez+' mm²':'')+(s.acPercorso?' — '+s.acPercorso:'')+(s.noteAc?' — '+s.noteAc:'')):'')+(( s.dcMt||s.dcSez)?td('Linea DC',(s.dcMt?s.dcMt+' mt':'')+(s.dcSez?' — Sez. '+s.dcSez+' mm²':'')+(s.dcPercorso?' — '+s.dcPercorso:'')+(s.noteDc?' — '+s.noteDc:'')):''))}
+  ${sH(sn+1,"MESSA IN SICUREZZA")}${tWrap(td('Metodo di messa in sicurezza',s.sicurezza||'')+td('Posizionamento cesta',s.cestaSu||'')+td('Durata prevista',s.cestaGiorni?'N. '+s.cestaGiorni+' giorni':'')+td('Altro',s.sicurezzaAltro||''))}
+  ${sH(sn+2,"NOTE TECNICHE E OSSERVAZIONI")}${tWrap(td('Calata stringhe',[s.calataPercorso,s.calataForatura,s.noteCalata].filter(Boolean).join(' — '))+td('Posizionamento inverter',s.posInverter||'')+((s.batteria==='si')?td('Posizionamento batteria',s.posBatteria||''):'')+((s.colonnina==='si')?td('Posizionamento Wallbox',s.posColonnina||''):'')+td('Connessione internet',[s.wifi,s.noteWifi].filter(Boolean).join(' — '))+td('Funzione backup',s.backup||'')+td('Eventuali lavori a carico cliente',s.lavoriCliente||'')+td('Note riservate (ufficio)',s.noteFinali||''))}
+  ${sH(sn+3,"STIMA TEMPI DI INSTALLAZIONE")}${tWrap(td('Giorni necessari per fine lavori',s.giorniLavori?s.giorniLavori+' giorni lavorativi':''))}
+  <div style="display:flex;gap:40px;margin-top:40px;padding-top:20px;border-top:2px solid #cfd8dc;">
+    <div style="flex:1;font-size:13px;"><div style="font-weight:700;margin-bottom:60px;">Firma Tecnico</div><div style="border-bottom:1.5px solid #263238;"></div></div>
+    <div style="flex:1;font-size:13px;"><div style="font-weight:700;margin-bottom:60px;">Per Conferma Cliente</div><div style="border-bottom:1.5px solid #263238;"></div></div>
+  </div>
+  <div style="font-size:10px;color:#546e7a;text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #eceff1;">ANTES SRL — Relazione di Sopralluogo — ${s.cliente||'—'} — ${s.localita||'—'}</div>`;
 }
 </script>
 </body>
