@@ -566,6 +566,27 @@
       </div>
 
       <div class="section">
+        <div class="section-header orange">☀️ Linea DC (Pannelli → Inverter)</div>
+        <div class="section-body">
+          <div class="form-row">
+            <div class="form-group half"><label>Distanza (mt)</label><input type="number" id="f-dc-mt" step="0.1" placeholder="Es. 15"></div>
+            <div class="form-group half"><label>Sezione cavo (mm²)</label><input type="text" id="f-dc-sez" placeholder="Es. 4"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group full"><label>Percorso linea DC</label>
+              <div class="check-group" id="cg-dc-percorso">
+                <label class="check-item" onclick="toggleCheck(this,'dc-percorso')"><input type="checkbox">Esterno</label>
+                <label class="check-item" onclick="toggleCheck(this,'dc-percorso')"><input type="checkbox">Interno</label>
+                <label class="check-item" onclick="toggleCheck(this,'dc-percorso')"><input type="checkbox">Sotto tegola</label>
+                <label class="check-item" onclick="toggleCheck(this,'dc-percorso')"><input type="checkbox">Canalina</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row"><div class="form-group full"><label>Note linea DC</label><input type="text" id="f-note-dc" placeholder="Percorso, criticità..."></div></div>
+        </div>
+      </div>
+
+      <div class="section">
         <div class="section-header blue">⚡ Linea AC (Inverter → Quadro)</div>
         <div class="section-body">
           <div class="form-row">
@@ -905,6 +926,7 @@ function readForm() {
     posBatteria:document.getElementById('f-pos-batteria').value,
     posColonnina:document.getElementById('f-pos-colonnina').value,
     calataPercorso:getChecks('calata-percorso'), calataForatura:getChecks('calata-foratura'), noteCalata:document.getElementById('f-note-calata').value,
+    dcMt:document.getElementById('f-dc-mt').value, dcSez:document.getElementById('f-dc-sez').value, dcPercorso:getChecks('dc-percorso'), noteDc:document.getElementById('f-note-dc').value,
     acMt:document.getElementById('f-ac-mt').value, acSez:document.getElementById('f-ac-sez').value, acPercorso:getChecks('ac-percorso'), noteAc:document.getElementById('f-note-ac').value,
     wifi:getChecks('wifi'), noteWifi:document.getElementById('f-note-wifi').value,
     backup:getChecks('backup'), noteBackup:document.getElementById('f-note-backup').value,
@@ -961,6 +983,8 @@ function populateForm(s) {
   setChecks('interruttore',s.interruttore||'',true);
   setChecks('calata-percorso',s.calataPercorso||'',true);
   setChecks('calata-foratura',s.calataForatura||'',true);
+  set('f-dc-mt',s.dcMt); set('f-dc-sez',s.dcSez); set('f-note-dc',s.noteDc);
+  setChecks('dc-percorso',s.dcPercorso||'');
   set('f-ac-mt',s.acMt); set('f-ac-sez',s.acSez); set('f-note-ac',s.noteAc);
   setChecks('ac-percorso',s.acPercorso||'');
   setChecks('wifi',s.wifi||'',true);
@@ -1321,6 +1345,11 @@ function renderReport(s, photos=[]) {
   <table class="report-table">
     ${row('Pos. nuovo inverter',s.posInverter)}${row('Pos. nuova batteria',s.posBatteria)}
     ${row('Pos. colonnina',s.posColonnina)}${row('Percorso calata',s.calataPercorso)}${row('Foratura',s.calataForatura)}${row('Note calata',s.noteCalata)}
+  </table>
+  <div class="report-section-title orange">☀️ Linea DC (Pannelli → Inverter)</div>
+  <table class="report-table">
+    ${row('Distanza',s.dcMt?s.dcMt+' mt':'')}${row('Sezione cavo',s.dcSez?s.dcSez+' mm²':'')}
+    ${row('Percorso',s.dcPercorso)}${row('Note',s.noteDc)}
   </table>
   <div class="report-section-title blue">⚡ Linea AC (Inverter → Quadro)</div>
   <table class="report-table">
