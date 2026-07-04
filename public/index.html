@@ -335,8 +335,8 @@
               <div class="form-group"><label>Potenza contrattuale (kW)</label><input type="number" id="f-pot-contrattuale" placeholder="Es. 100"></div>
               <div class="form-group"><label>Tipo connessione rete</label>
                 <div class="check-group" id="cg-connessione-rete">
-                  <label class="check-item" onclick="toggleCheck(this,'connessione-rete')"><input type="checkbox">BT (230/400V)</label>
-                  <label class="check-item" onclick="toggleCheck(this,'connessione-rete')"><input type="checkbox">MT (15/20kV)</label>
+                  <label class="check-item" onclick="toggleCheck(this,'connessione-rete');event.preventDefault()"><input type="checkbox">BT (230/400V)</label>
+                  <label class="check-item" onclick="toggleCheck(this,'connessione-rete');event.preventDefault()"><input type="checkbox">MT (15/20kV)</label>
                 </div>
               </div>
             </div>
@@ -445,11 +445,11 @@
           <div class="form-row">
             <div class="form-group full"><label>Attrezzatura sicurezza</label>
               <div class="check-group" id="cg-sicurezza">
-                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Parapetti</label>
-                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Trabatello</label>
-                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Ponteggio</label>
-                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Linea vita esistente</label>
-                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Scala</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza');event.preventDefault()"><input type="checkbox">Parapetti</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza');event.preventDefault()"><input type="checkbox">Trabatello</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza');event.preventDefault()"><input type="checkbox">Ponteggio</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza');event.preventDefault()"><input type="checkbox">Linea vita esistente</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza');event.preventDefault()"><input type="checkbox">Scala</label>
               </div>
             </div>
           </div>
