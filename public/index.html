@@ -548,16 +548,41 @@
           <div class="form-row"><div class="form-group full"><label>Posizionamento nuova batteria</label><input type="text" id="f-pos-batteria" placeholder="Es. Garage, parete laterale"></div></div>
           <div class="form-row"><div class="form-group full"><label>Posizionamento colonnina ricarica</label><input type="text" id="f-pos-colonnina" placeholder="Es. Garage, fianco portone"></div></div>
           <div class="form-row">
-            <div class="form-group"><label>Calata stringhe</label>
-              <div class="check-group" id="cg-calata">
-                <label class="check-item" onclick="toggleCheck(this,'calata',true)"><input type="checkbox">Esterna</label>
-                <label class="check-item" onclick="toggleCheck(this,'calata',true)"><input type="checkbox">Interna</label>
-                <label class="check-item" onclick="toggleCheck(this,'calata',true)"><input type="checkbox">Necessario forare</label>
-                <label class="check-item" onclick="toggleCheck(this,'calata',true)"><input type="checkbox">Non forare</label>
+            <div class="form-group"><label>Percorso calata stringhe</label>
+              <div class="check-group" id="cg-calata-percorso">
+                <label class="check-item" onclick="toggleCheck(this,'calata-percorso',true)"><input type="checkbox">Esterna</label>
+                <label class="check-item" onclick="toggleCheck(this,'calata-percorso',true)"><input type="checkbox">Interna</label>
+              </div>
+            </div>
+            <div class="form-group"><label>Foratura</label>
+              <div class="check-group" id="cg-calata-foratura">
+                <label class="check-item" onclick="toggleCheck(this,'calata-foratura',true)"><input type="checkbox">Necessario forare</label>
+                <label class="check-item" onclick="toggleCheck(this,'calata-foratura',true)"><input type="checkbox">Non forare</label>
               </div>
             </div>
           </div>
           <div class="form-row"><div class="form-group full"><label>Note calata stringhe</label><input type="text" id="f-note-calata" placeholder="Percorso cavi..."></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header blue">⚡ Linea AC (Inverter → Quadro)</div>
+        <div class="section-body">
+          <div class="form-row">
+            <div class="form-group half"><label>Distanza (mt)</label><input type="number" id="f-ac-mt" step="0.1" placeholder="Es. 10"></div>
+            <div class="form-group half"><label>Sezione cavo (mm²)</label><input type="text" id="f-ac-sez" placeholder="Es. 6"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group full"><label>Percorso linea AC</label>
+              <div class="check-group" id="cg-ac-percorso">
+                <label class="check-item" onclick="toggleCheck(this,'ac-percorso')"><input type="checkbox">Esterno</label>
+                <label class="check-item" onclick="toggleCheck(this,'ac-percorso')"><input type="checkbox">Interno</label>
+                <label class="check-item" onclick="toggleCheck(this,'ac-percorso')"><input type="checkbox">Sotto traccia</label>
+                <label class="check-item" onclick="toggleCheck(this,'ac-percorso')"><input type="checkbox">Canalina</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row"><div class="form-group full"><label>Note linea AC</label><input type="text" id="f-note-ac" placeholder="Percorso, criticità..."></div></div>
         </div>
       </div>
 
@@ -879,7 +904,8 @@ function readForm() {
     posInverter:document.getElementById('f-pos-inverter').value,
     posBatteria:document.getElementById('f-pos-batteria').value,
     posColonnina:document.getElementById('f-pos-colonnina').value,
-    calata:getChecks('calata'), noteCalata:document.getElementById('f-note-calata').value,
+    calataPercorso:getChecks('calata-percorso'), calataForatura:getChecks('calata-foratura'), noteCalata:document.getElementById('f-note-calata').value,
+    acMt:document.getElementById('f-ac-mt').value, acSez:document.getElementById('f-ac-sez').value, acPercorso:getChecks('ac-percorso'), noteAc:document.getElementById('f-note-ac').value,
     wifi:getChecks('wifi'), noteWifi:document.getElementById('f-note-wifi').value,
     backup:getChecks('backup'), noteBackup:document.getElementById('f-note-backup').value,
     lavoriCliente:document.getElementById('f-lavori-cliente').value,
@@ -933,7 +959,10 @@ function populateForm(s) {
   setChecks('sicurezza',s.sicurezza||'');
   setChecks('terra',s.terra||'',true);
   setChecks('interruttore',s.interruttore||'',true);
-  setChecks('calata',s.calata||'',true);
+  setChecks('calata-percorso',s.calataPercorso||'',true);
+  setChecks('calata-foratura',s.calataForatura||'',true);
+  set('f-ac-mt',s.acMt); set('f-ac-sez',s.acSez); set('f-note-ac',s.noteAc);
+  setChecks('ac-percorso',s.acPercorso||'');
   setChecks('wifi',s.wifi||'',true);
   setChecks('backup',s.backup||'',true);
 }
@@ -1291,7 +1320,12 @@ function renderReport(s, photos=[]) {
   <div class="report-section-title">📍 Posizionamenti e logistica</div>
   <table class="report-table">
     ${row('Pos. nuovo inverter',s.posInverter)}${row('Pos. nuova batteria',s.posBatteria)}
-    ${row('Pos. colonnina',s.posColonnina)}${row('Calata stringhe',s.calata)}${row('Note calata',s.noteCalata)}
+    ${row('Pos. colonnina',s.posColonnina)}${row('Percorso calata',s.calataPercorso)}${row('Foratura',s.calataForatura)}${row('Note calata',s.noteCalata)}
+  </table>
+  <div class="report-section-title blue">⚡ Linea AC (Inverter → Quadro)</div>
+  <table class="report-table">
+    ${row('Distanza',s.acMt?s.acMt+' mt':'')}${row('Sezione cavo',s.acSez?s.acSez+' mm²':'')}
+    ${row('Percorso',s.acPercorso)}${row('Note',s.noteAc)}
   </table>
   <div class="report-section-title blue">📶 Connettività e backup</div>
   <table class="report-table">
