@@ -1491,9 +1491,9 @@ function renderReport(s, photos=[]) {
         const catL=cat.label.replace(/[\u{1F300}-\u{1FFFF}]/gu,'').trim();
         const imgs=cp.map(p=>{
           const fig=figN++;
-          return `<div style="text-align:center;break-inside:avoid;margin-bottom:14px;"><img src="${p.url}" style="max-width:75%;border-radius:4px;border:1px solid #cfd8dc;display:block;margin:0 auto;"><div style="font-size:11px;font-style:italic;color:#546e7a;margin-top:5px;">Fig. ${fig} – ${catL}${p.nota?' — '+p.nota:''}</div></div>`;
+          return `<div style="break-inside:avoid;text-align:center;"><img src="${p.url}" style="width:100%;border-radius:4px;border:1px solid #cfd8dc;display:block;"><div style="font-size:10px;font-style:italic;color:#546e7a;margin-top:3px;">Fig. ${fig}${p.nota?' — '+p.nota:''}</div></div>`;
         }).join('');
-        return `<div style="margin-bottom:20px;"><div style="font-size:14px;font-weight:700;color:#2e7d32;border-left:4px solid #2e7d32;padding-left:10px;margin:16px 0 12px;">${catL}</div>${imgs}</div>`;
+        return `<div style="margin-bottom:16px;"><div style="font-size:13px;font-weight:700;color:#2e7d32;border-left:4px solid #2e7d32;padding-left:10px;margin:12px 0 8px;">${catL}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;">${imgs}</div></div>`;
       }).join('');
     }
   }
