@@ -761,6 +761,14 @@
         <button class="btn-save" onclick="addUser()">Aggiungi utente</button>
       </div>
       <div id="users-list"><div class="loader">Caricamento...</div></div>
+      <div class="add-user-form" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;">
+        <div class="add-user-title">🛠️ Strumenti amministratore</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
+          <button class="btn-save" style="background:#1565c0;" onclick="exportBackup()">📥 Esporta backup sopralluoghi</button>
+          <button class="btn-save" style="background:#c62828;" onclick="confirmClearDB()">🗑️ Svuota database sopralluoghi</button>
+        </div>
+        <p style="font-size:12px;color:var(--gray);margin-top:10px;">Il backup esporta tutti i sopralluoghi in formato JSON. Lo svuotamento è irreversibile e non elimina utenti né foto.</p>
+      </div>
     </div>
   </div>
 
@@ -1207,6 +1215,30 @@ async function loadUsers() {
         ${u.id!==currentUser.id?`<button class="btn-icon danger" onclick="deleteUser('${u.id}','${u.name}')">🗑️</button>`:'<span style="font-size:12px;color:var(--gray)">tu</span>'}
       </div>`).join('');
   } catch(e) { showToast('❌ '+e.message); }
+}
+
+async function exportBackup() {
+  try {
+    const data = await api('GET', '/api/surveys');
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().slice(0,10);
+    a.href = url; a.download = `sopralluoghi_backup_${date}.json`;
+    a.click(); URL.revokeObjectURL(url);
+  } catch(e) { alert('Errore export: ' + e.message); }
+}
+
+async function confirmClearDB() {
+  const confirm1 = confirm('⚠️ Sei sicuro di voler eliminare TUTTI i sopralluoghi?\n\nQuesta operazione è IRREVERSIBILE.\n\nGli utenti NON verranno eliminati.');
+  if (!confirm1) return;
+  const confirm2 = confirm('Ultima conferma: eliminare definitivamente tutti i sopralluoghi?');
+  if (!confirm2) return;
+  try {
+    await api('DELETE', '/api/admin/surveys');
+    alert('✅ Database sopralluoghi svuotato.');
+    loadSurveys();
+  } catch(e) { alert('Errore: ' + e.message); }
 }
 
 async function addUser() {
