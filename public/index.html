@@ -184,6 +184,11 @@
     #dashboard-view,#form-view,#users-view{display:none!important;}
     #report-view{display:block!important;}
   }
+  /* ── FILTRI ── */
+  .filter-btn{background:white;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--gray);cursor:pointer;transition:all .15s;}
+  .filter-btn:hover{border-color:var(--green-mid);color:var(--green);}
+  .filter-btn.active{background:var(--green);color:white;border-color:var(--green);}
+
   /* ── LAYOUT & FIRMA ── */
   .layout-placeholder{border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;color:var(--gray);font-size:13px;background:var(--gray-light);margin-bottom:10px;}
   .layout-preview-img{max-width:100%;border-radius:8px;border:1px solid var(--border);margin-bottom:10px;display:block;}
@@ -273,6 +278,11 @@
         <div class="stat-card blue"><div class="stat-num" id="stat-completo">0</div><div class="stat-label">Completati</div></div>
       </div>
       <input class="search-bar" type="text" placeholder="🔍 Cerca per cliente, tecnico, località..." oninput="renderCards(this.value)" id="search-input">
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="filter-btn active" id="f-tutti" onclick="setFilter('tutti')">Tutti</button>
+        <button class="filter-btn" id="f-bozza" onclick="setFilter('bozza')">📝 Bozze</button>
+        <button class="filter-btn" id="f-completo" onclick="setFilter('completo')">✅ Completati</button>
+      </div>
       <div class="card-list" id="card-list"><div class="loader">Caricamento...</div></div>
     </div>
   </div>
@@ -1086,9 +1096,19 @@ function renderDashboard() {
   renderCards(document.getElementById('search-input').value);
 }
 
+let activeFilter='tutti';
+function setFilter(f){
+  activeFilter=f;
+  ['tutti','bozza','completo'].forEach(k=>{
+    document.getElementById('f-'+k)?.classList.toggle('active',k===f);
+  });
+  renderCards(document.getElementById('search-input').value);
+}
+
 function renderCards(q='') {
   const list=document.getElementById('card-list');
   const filtered=surveys.filter(s=>{
+    if(activeFilter!=='tutti' && s.status!==activeFilter) return false;
     if(!q) return true;
     return `${s.cliente} ${s.tecnico} ${s.localita} ${s.ditta} ${s.createdByName}`.toLowerCase().includes(q.toLowerCase());
   });
@@ -1146,7 +1166,7 @@ async function saveSurvey(status) {
     }
     showToast(status==='completo'?'✅ Sopralluogo completato!':'💾 Bozza salvata');
     await loadSurveys();
-    loadFotoSection(); // ricarica sezione foto (ora editId è disponibile)
+    goBackToDash();
   } catch(e) { showToast('❌ Errore: '+e.message); }
 }
 
