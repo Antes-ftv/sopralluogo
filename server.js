@@ -157,7 +157,6 @@ app.put('/api/surveys/:id', authMiddleware, (req, res) => {
 
 app.delete('/api/surveys/:id', authMiddleware, (req, res) => {
   const surveyId = req.params.id;
-  // Elimina i file foto fisici + record DB
   const photos = db.prepare('SELECT filename FROM photos WHERE survey_id = ?').all(surveyId);
   for (const p of photos) {
     const filepath = path.join(UPLOAD_DIR, p.filename);
@@ -165,6 +164,19 @@ app.delete('/api/surveys/:id', authMiddleware, (req, res) => {
   }
   db.prepare('DELETE FROM photos WHERE survey_id = ?').run(surveyId);
   db.prepare('DELETE FROM surveys WHERE id = ?').run(surveyId);
+  res.json({ success: true });
+});
+
+// ── ADMIN ROUTES ──────────────────────────────────────────
+app.delete('/api/admin/surveys', authMiddleware, adminOnly, (req, res) => {
+  // Elimina tutte le foto fisiche
+  const photos = db.prepare('SELECT filename FROM photos').all();
+  for (const p of photos) {
+    const filepath = path.join(UPLOAD_DIR, p.filename);
+    try { if (fs.existsSync(filepath)) fs.unlinkSync(filepath); } catch(e) {}
+  }
+  db.prepare('DELETE FROM photos').run();
+  db.prepare('DELETE FROM surveys').run();
   res.json({ success: true });
 });
 
