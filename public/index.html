@@ -764,8 +764,10 @@
       <div class="add-user-form" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;">
         <div class="add-user-title">🛠️ Strumenti amministratore</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
-          <button class="btn-save" style="background:#1565c0;" onclick="exportBackup()">📥 Esporta backup sopralluoghi</button>
-          <button class="btn-save" style="background:#c62828;" onclick="confirmClearDB()">🗑️ Svuota database sopralluoghi</button>
+          <button class="btn-save" style="background:#1565c0;" onclick="exportBackup()">📥 Esporta backup</button>
+          <button class="btn-save" style="background:#2e7d32;" onclick="document.getElementById('import-file').click()">📤 Importa backup</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(this)">
+          <button class="btn-save" style="background:#c62828;" onclick="confirmClearDB()">🗑️ Svuota database</button>
         </div>
         <p style="font-size:12px;color:var(--gray);margin-top:10px;">Il backup esporta tutti i sopralluoghi in formato JSON. Lo svuotamento è irreversibile e non elimina utenti né foto.</p>
       </div>
@@ -1219,14 +1221,28 @@ async function loadUsers() {
 
 async function exportBackup() {
   try {
-    const data = await api('GET', '/api/surveys');
+    const data = await api('GET', '/api/admin/backup');
     const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const date = new Date().toISOString().slice(0,10);
-    a.href = url; a.download = `sopralluoghi_backup_${date}.json`;
+    a.href = url; a.download = `backup_ftv_${date}.json`;
     a.click(); URL.revokeObjectURL(url);
+    alert(`✅ Backup esportato: ${data.surveys.length} sopralluoghi, ${data.users.length} utenti.`);
   } catch(e) { alert('Errore export: ' + e.message); }
+}
+
+async function importBackup(input) {
+  const file = input.files[0]; if (!file) return;
+  input.value = '';
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data.surveys && !data.users) { alert('File non valido.'); return; }
+    const res = await api('POST', '/api/admin/restore', data);
+    alert(`✅ Importazione completata!\n\nSopralluoghi aggiunti: ${res.addedSurveys} (saltati: ${res.skippedSurveys})\nUtenti aggiunti: ${res.addedUsers} (saltati: ${res.skippedUsers})`);
+    loadSurveys();
+  } catch(e) { alert('Errore importazione: ' + e.message); }
 }
 
 async function confirmClearDB() {
