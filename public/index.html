@@ -844,9 +844,7 @@ function startApp() {
   document.getElementById('login-view').style.display = 'none';
   document.getElementById('app-shell').classList.add('active');
   document.getElementById('user-badge').textContent = currentUser.name;
-  if (currentUser.role === 'admin') {
-    document.getElementById('tab-users').style.display = '';
-  }
+  document.getElementById('tab-users').style.display = currentUser.role === 'admin' ? '' : 'none';
   switchTab('dashboard');
 }
 
