@@ -168,6 +168,33 @@ app.delete('/api/surveys/:id', authMiddleware, (req, res) => {
 });
 
 // ── ADMIN ROUTES ──────────────────────────────────────────
+app.get('/api/admin/backup', authMiddleware, adminOnly, (req, res) => {
+  const surveys = db.prepare('SELECT * FROM surveys ORDER BY created_at ASC').all().map(r => ({
+    ...JSON.parse(r.data), id: r.id, status: r.status,
+    createdById: r.created_by_id, createdByName: r.created_by_name,
+    createdAt: r.created_at, updatedAt: r.updated_at
+  }));
+  const users = db.prepare('SELECT id, name, email, password, role, created_at FROM users ORDER BY created_at ASC').all();
+  res.json({ exportedAt: new Date().toISOString(), surveys, users });
+});
+
+app.post('/api/admin/restore', authMiddleware, adminOnly, (req, res) => {
+  const { surveys = [], users = [] } = req.body || {};
+  let addedSurveys = 0, skippedSurveys = 0, addedUsers = 0, skippedUsers = 0;
+  const insertSurvey = db.prepare('INSERT OR IGNORE INTO surveys (id, data, status, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
+  for (const s of surveys) {
+    const { id, status, createdById, createdByName, createdAt, updatedAt, ...data } = s;
+    const result = insertSurvey.run(id, JSON.stringify(data), status || 'bozza', createdById || '', createdByName || '', createdAt || new Date().toISOString(), updatedAt || new Date().toISOString());
+    result.changes > 0 ? addedSurveys++ : skippedSurveys++;
+  }
+  const insertUser = db.prepare('INSERT OR IGNORE INTO users (id, name, email, password, role, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+  for (const u of users) {
+    const result = insertUser.run(u.id, u.name, u.email, u.password, u.role || 'user', u.created_at || new Date().toISOString());
+    result.changes > 0 ? addedUsers++ : skippedUsers++;
+  }
+  res.json({ success: true, addedSurveys, skippedSurveys, addedUsers, skippedUsers });
+});
+
 app.delete('/api/admin/surveys', authMiddleware, adminOnly, (req, res) => {
   // Elimina tutte le foto fisiche
   const photos = db.prepare('SELECT filename FROM photos').all();
