@@ -203,6 +203,7 @@ app.post('/api/photos', authMiddleware, upload.single('file'), async (req, res) 
   const { surveyId, category, nota } = req.body;
   if (!surveyId) return res.status(400).json({ error: 'surveyId mancante' });
   const id = 'ph_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+  console.log('DEBUG useCloudinary:', useCloudinary, '| CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME, '| buffer:', !!req.file.buffer, '| filename:', req.file.filename);
 
   try {
     let filename, url;
