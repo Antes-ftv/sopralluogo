@@ -18,7 +18,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET || ''
 });
 const useCloudinary = !!process.env.CLOUDINARY_CLOUD_NAME;
-console.log(useCloudinary ? '☁️  Cloudinary attivo' : '⚠️  Cloudinary non configurato — foto su disco locale');
+console.log(useCloudinary ? 'CLOUDINARY-OK useCloudinary=true cloud=' + process.env.CLOUDINARY_CLOUD_NAME : 'CLOUDINARY-NO env var mancante');
 
 // ── CARTELLA UPLOAD LOCALE (fallback) ─────────────────────
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
@@ -63,7 +63,7 @@ if (!adminExists) {
   db.prepare(
     'INSERT INTO users (id, name, email, password, role) VALUES (?, ?, ?, ?, ?)'
   ).run('admin_001', 'Amministratore', 'admin@ftv.it', bcrypt.hashSync('Admin2026!', 10), 'admin');
-  console.log('✅ Admin creato: admin@ftv.it / Admin2026!');
+  console.log('Admin creato: admin@ftv.it / Admin2026!');
 }
 
 // ── MULTER (memory storage per Cloudinary, disk per fallback) ──
@@ -203,7 +203,7 @@ app.post('/api/photos', authMiddleware, upload.single('file'), async (req, res) 
   const { surveyId, category, nota } = req.body;
   if (!surveyId) return res.status(400).json({ error: 'surveyId mancante' });
   const id = 'ph_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-  console.log('DEBUG useCloudinary:', useCloudinary, '| CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME, '| buffer:', !!req.file.buffer, '| filename:', req.file.filename);
+  console.log('PHOTO-UPLOAD useCloudinary=' + useCloudinary + ' buffer=' + (!!req.file.buffer) + ' filename=' + req.file.filename);
 
   try {
     let filename, url;
@@ -225,6 +225,7 @@ app.post('/api/photos', authMiddleware, upload.single('file'), async (req, res) 
     ).run(id, surveyId, category || 'altro', nota || '', filename);
     res.json({ success: true, id, url });
   } catch(e) {
+    console.log('PHOTO-UPLOAD-ERROR: ' + e.message);
     res.status(500).json({ error: 'Errore upload: ' + e.message });
   }
 });
@@ -336,7 +337,7 @@ app.delete('/api/users/:id', authMiddleware, adminOnly, (req, res) => {
 
 // ── START ─────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`\n🌞 Sopralluogo FTV avviato su http://localhost:${PORT}`);
+  console.log(`\nSopralluogo FTV avviato su http://localhost:${PORT}`);
   console.log(`   Admin: admin@ftv.it / Admin2026!`);
-  console.log(`   Storage: ${useCloudinary ? 'Cloudinary ☁️' : 'Locale 💾'}\n`);
+  console.log(`   Storage: ${useCloudinary ? 'Cloudinary' : 'Locale'}\n`);
 });
