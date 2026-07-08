@@ -179,25 +179,10 @@
     .app-header,.nav-tabs,.form-nav,.bottom-bar,.no-print{display:none!important;}
     body{background:white;}
     .report-doc{box-shadow:none;border:none;padding:0;}
-    #login-view{display:none!important;}
-    #app-shell{display:block!important;}
+    #login-view,#app-shell{display:block!important;}
     #dashboard-view,#form-view,#users-view{display:none!important;}
     #report-view{display:block!important;}
   }
-  /* ── FILTRI ── */
-  .filter-btn{background:white;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--gray);cursor:pointer;transition:all .15s;}
-  .filter-btn:hover{border-color:var(--green-mid);color:var(--green);}
-  .filter-btn.active{background:var(--green);color:white;border-color:var(--green);}
-
-  /* ── LAYOUT & FIRMA ── */
-  .layout-placeholder{border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;color:var(--gray);font-size:13px;background:var(--gray-light);margin-bottom:10px;}
-  .layout-preview-img{max-width:100%;border-radius:8px;border:1px solid var(--border);margin-bottom:10px;display:block;}
-  .btn-upload-layout{background:var(--green-light);color:var(--green);border:1px dashed var(--green);border-radius:6px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:600;}
-  .btn-upload-layout:hover{background:var(--green);color:white;}
-  .btn-remove-layout{background:var(--red-light);color:var(--red);border:1px solid var(--red);border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;}
-  #signature-canvas{display:block;border:1.5px solid var(--border);border-radius:8px;background:white;touch-action:none;cursor:crosshair;width:100%;height:140px;}
-  .btn-clear-sign{background:var(--red-light);color:var(--red);border:1px solid var(--red);border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;}
-
   @media(max-width:600px){
     .form-row{flex-direction:column;}
     .schema-fields{grid-template-columns:1fr;}
@@ -225,7 +210,6 @@
   .report-foto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;}
   @media(max-width:500px){.report-foto-grid{grid-template-columns:repeat(2,1fr);}}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 
@@ -278,11 +262,6 @@
         <div class="stat-card blue"><div class="stat-num" id="stat-completo">0</div><div class="stat-label">Completati</div></div>
       </div>
       <input class="search-bar" type="text" placeholder="🔍 Cerca per cliente, tecnico, località..." oninput="renderCards(this.value)" id="search-input">
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <button class="filter-btn active" id="f-tutti" onclick="setFilter('tutti')">Tutti</button>
-        <button class="filter-btn" id="f-bozza" onclick="setFilter('bozza')">📝 Bozze</button>
-        <button class="filter-btn" id="f-completo" onclick="setFilter('completo')">✅ Completati</button>
-      </div>
       <div class="card-list" id="card-list"><div class="loader">Caricamento...</div></div>
     </div>
   </div>
@@ -308,6 +287,10 @@
             <div class="form-group"><label>Nome tecnico</label><input type="text" id="f-tecnico" placeholder="Nome e cognome"></div>
           </div>
           <div class="form-row">
+            <div class="form-group"><label>Data appuntamento</label><input type="date" id="f-dataAppuntamento"></div>
+            <div class="form-group"><label>Ora appuntamento</label><input type="time" id="f-oraAppuntamento"></div>
+          </div>
+          <div class="form-row">
             <div class="form-group"><label>Data sopralluogo</label><input type="date" id="f-data"></div>
             <div class="form-group"><label>Località</label><input type="text" id="f-localita" placeholder="Città, Provincia"></div>
           </div>
@@ -328,11 +311,7 @@
                 <button class="toggle-btn" id="t-fornitura-trifase" onclick="setToggle('fornitura','trifase')">Trifase</button>
               </div>
             </div>
-            <div class="form-group"><label>Potenza totale (kW)</label><input type="number" id="f-kw" step="0.1" placeholder="Es. 6.5" oninput="checkSPI()">
-              <div id="spi-alert" style="display:none;margin-top:8px;padding:10px 14px;background:#fff3e0;border-left:4px solid #f57c00;border-radius:6px;font-size:13px;color:#e65100;font-weight:600;">
-                ⚠️ Potenza ≥ 12 kW — Necessaria <strong>SPI esterna</strong> secondo normativa CEI 0-21
-              </div>
-            </div>
+            <div class="form-group"><label>Potenza totale (kW)</label><input type="number" id="f-kw" step="0.1" placeholder="Es. 6.5"></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Quantità e modello pannelli</label><input type="text" id="f-pannelli" placeholder="Es. 12x Longi 410W"></div>
@@ -353,28 +332,14 @@
             </div>
             <div class="form-group"><label>Modello colonnina</label><input type="text" id="f-colonnina-mod" placeholder="Marca e modello"></div>
           </div>
-          <div class="form-row">
-            <div class="form-group half"><label>Funzione backup</label>
-              <div class="toggle-group">
-                <button class="toggle-btn" id="t-backup-si" onclick="setToggle('backup','si');showBackupTipo(true)">Sì</button>
-                <button class="toggle-btn" id="t-backup-no" onclick="setToggle('backup','no');showBackupTipo(false)">No</button>
-              </div>
-            </div>
-            <div class="form-group half" id="backup-tipo-group" style="display:none"><label>Tipo backup</label>
-              <div class="toggle-group">
-                <button class="toggle-btn" id="t-backupTipo-tutta" onclick="setToggle('backupTipo','tutta')">Tutta la casa</button>
-                <button class="toggle-btn" id="t-backupTipo-parziale" onclick="setToggle('backupTipo','parziale')">Parziale</button>
-              </div>
-            </div>
-          </div>
           <div id="ci-extra-impianto" style="display:none">
             <hr style="margin:12px 0;border:none;border-top:1px solid var(--border)">
             <div class="form-row">
               <div class="form-group"><label>Potenza contrattuale (kW)</label><input type="number" id="f-pot-contrattuale" placeholder="Es. 100"></div>
               <div class="form-group"><label>Tipo connessione rete</label>
                 <div class="check-group" id="cg-connessione-rete">
-                  <label class="check-item" onclick="toggleCheck(this,'connessione-rete');event.preventDefault()"><input type="checkbox">BT (230/400V)</label>
-                  <label class="check-item" onclick="toggleCheck(this,'connessione-rete');event.preventDefault()"><input type="checkbox">MT (15/20kV)</label>
+                  <label class="check-item" onclick="toggleCheck(this,'connessione-rete')"><input type="checkbox">BT (230/400V)</label>
+                  <label class="check-item" onclick="toggleCheck(this,'connessione-rete')"><input type="checkbox">MT (15/20kV)</label>
                 </div>
               </div>
             </div>
@@ -483,11 +448,11 @@
           <div class="form-row">
             <div class="form-group full"><label>Attrezzatura sicurezza</label>
               <div class="check-group" id="cg-sicurezza">
-                <label class="check-item" onclick="toggleCheck(this,'sicurezza');event.preventDefault()"><input type="checkbox">Parapetti</label>
-                <label class="check-item" onclick="toggleCheck(this,'sicurezza');event.preventDefault()"><input type="checkbox">Trabatello</label>
-                <label class="check-item" onclick="toggleCheck(this,'sicurezza');event.preventDefault()"><input type="checkbox">Ponteggio</label>
-                <label class="check-item" onclick="toggleCheck(this,'sicurezza');event.preventDefault()"><input type="checkbox">Linea vita esistente</label>
-                <label class="check-item" onclick="toggleCheck(this,'sicurezza');event.preventDefault()"><input type="checkbox">Scala</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Parapetti</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Trabatello</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Ponteggio</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Linea vita esistente</label>
+                <label class="check-item" onclick="toggleCheck(this,'sicurezza')"><input type="checkbox">Scala</label>
               </div>
             </div>
           </div>
@@ -586,63 +551,17 @@
           <div class="form-row"><div class="form-group full"><label>Posizionamento nuovo inverter</label><input type="text" id="f-pos-inverter" placeholder="Es. Locale tecnico, parete nord"></div></div>
           <div class="form-row"><div class="form-group full"><label>Posizionamento nuova batteria</label><input type="text" id="f-pos-batteria" placeholder="Es. Garage, parete laterale"></div></div>
           <div class="form-row"><div class="form-group full"><label>Posizionamento colonnina ricarica</label><input type="text" id="f-pos-colonnina" placeholder="Es. Garage, fianco portone"></div></div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-header orange">☀️ Linea DC (Pannelli → Inverter)</div>
-        <div class="section-body">
           <div class="form-row">
-            <div class="form-group"><label>Percorso calata stringhe</label>
-              <div class="check-group" id="cg-calata-percorso">
-                <label class="check-item" onclick="toggleCheck(this,'calata-percorso',true)"><input type="checkbox">Esterna</label>
-                <label class="check-item" onclick="toggleCheck(this,'calata-percorso',true)"><input type="checkbox">Interna</label>
-              </div>
-            </div>
-            <div class="form-group"><label>Foratura</label>
-              <div class="check-group" id="cg-calata-foratura">
-                <label class="check-item" onclick="toggleCheck(this,'calata-foratura',true)"><input type="checkbox">Necessario forare</label>
-                <label class="check-item" onclick="toggleCheck(this,'calata-foratura',true)"><input type="checkbox">Non forare</label>
+            <div class="form-group"><label>Calata stringhe</label>
+              <div class="check-group" id="cg-calata">
+                <label class="check-item" onclick="toggleCheck(this,'calata',true)"><input type="checkbox">Esterna</label>
+                <label class="check-item" onclick="toggleCheck(this,'calata',true)"><input type="checkbox">Interna</label>
+                <label class="check-item" onclick="toggleCheck(this,'calata',true)"><input type="checkbox">Necessario forare</label>
+                <label class="check-item" onclick="toggleCheck(this,'calata',true)"><input type="checkbox">Non forare</label>
               </div>
             </div>
           </div>
           <div class="form-row"><div class="form-group full"><label>Note calata stringhe</label><input type="text" id="f-note-calata" placeholder="Percorso cavi..."></div></div>
-          <div class="form-row">
-            <div class="form-group half"><label>Distanza (mt)</label><input type="number" id="f-dc-mt" step="0.1" placeholder="Es. 15"></div>
-            <div class="form-group half"><label>Sezione cavo (mm²)</label><input type="text" id="f-dc-sez" placeholder="Es. 4"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group full"><label>Percorso linea DC</label>
-              <div class="check-group" id="cg-dc-percorso">
-                <label class="check-item" onclick="toggleCheck(this,'dc-percorso');event.preventDefault()"><input type="checkbox">Esterno</label>
-                <label class="check-item" onclick="toggleCheck(this,'dc-percorso');event.preventDefault()"><input type="checkbox">Interno</label>
-                <label class="check-item" onclick="toggleCheck(this,'dc-percorso');event.preventDefault()"><input type="checkbox">Sotto tegola</label>
-                <label class="check-item" onclick="toggleCheck(this,'dc-percorso');event.preventDefault()"><input type="checkbox">Canalina</label>
-              </div>
-            </div>
-          </div>
-          <div class="form-row"><div class="form-group full"><label>Note linea DC</label><input type="text" id="f-note-dc" placeholder="Percorso, criticità..."></div></div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-header blue">⚡ Linea AC (Inverter → Quadro)</div>
-        <div class="section-body">
-          <div class="form-row">
-            <div class="form-group half"><label>Distanza (mt)</label><input type="number" id="f-ac-mt" step="0.1" placeholder="Es. 10"></div>
-            <div class="form-group half"><label>Sezione cavo (mm²)</label><input type="text" id="f-ac-sez" placeholder="Es. 6"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group full"><label>Percorso linea AC</label>
-              <div class="check-group" id="cg-ac-percorso">
-                <label class="check-item" onclick="toggleCheck(this,'ac-percorso');event.preventDefault()"><input type="checkbox">Esterno</label>
-                <label class="check-item" onclick="toggleCheck(this,'ac-percorso');event.preventDefault()"><input type="checkbox">Interno</label>
-                <label class="check-item" onclick="toggleCheck(this,'ac-percorso');event.preventDefault()"><input type="checkbox">Sotto traccia</label>
-                <label class="check-item" onclick="toggleCheck(this,'ac-percorso');event.preventDefault()"><input type="checkbox">Canalina</label>
-              </div>
-            </div>
-          </div>
-          <div class="form-row"><div class="form-group full"><label>Note linea AC</label><input type="text" id="f-note-ac" placeholder="Percorso, criticità..."></div></div>
         </div>
       </div>
 
@@ -661,6 +580,16 @@
             </div>
           </div>
           <div class="form-row"><div class="form-group full"><label>Note connettività</label><input type="text" id="f-note-wifi" placeholder="Es. Router in cucina, segnale debole in garage"></div></div>
+          <div class="form-row">
+            <div class="form-group"><label>Funzione backup</label>
+              <div class="check-group" id="cg-backup">
+                <label class="check-item" onclick="toggleCheck(this,'backup',true)"><input type="checkbox">Tutta la casa</label>
+                <label class="check-item" onclick="toggleCheck(this,'backup',true)"><input type="checkbox">Parziale</label>
+                <label class="check-item" onclick="toggleCheck(this,'backup',true)"><input type="checkbox">Non previsto</label>
+              </div>
+            </div>
+          </div>
+          <div class="form-row"><div class="form-group full"><label>Note backup</label><input type="text" id="f-note-backup" placeholder="Es. Solo carichi essenziali"></div></div>
         </div>
       </div>
 
@@ -676,39 +605,6 @@
         </div>
       </div>
     </div>
-
-      <!-- LAYOUT IMPIANTO -->
-      <div class="section">
-        <div class="section-header">📐 Layout posizionamento impianto</div>
-        <div class="section-body">
-          <p style="font-size:13px;color:var(--gray);margin-bottom:12px;">Carica il disegno del posizionamento pannelli (foto, immagine o PDF).</p>
-          <div id="layout-placeholder" class="layout-placeholder">📐 Nessun layout caricato</div>
-          <img id="layout-preview-img" class="layout-preview-img" style="display:none;" src="" alt="Layout impianto">
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn-upload-layout" onclick="document.getElementById('layout-file-input').click()">📎 Carica layout</button>
-            <button class="btn-remove-layout" id="btn-remove-layout" style="display:none;" onclick="removeLayout()">✕ Rimuovi</button>
-          </div>
-          <input type="file" id="layout-file-input" accept="image/*,.pdf" style="display:none" onchange="handleLayoutInput(event)">
-        </div>
-      </div>
-
-      <!-- FIRMA CLIENTE -->
-      <div class="section">
-        <div class="section-header" style="background:#4a148c;">✍️ Firma cliente</div>
-        <div class="section-body">
-          <p style="font-size:13px;color:var(--gray);margin-bottom:12px;">Il cliente firma qui al termine del sopralluogo. La firma verrà inclusa nel report.</p>
-          <div class="form-row">
-            <div class="form-group full"><label>Nome cliente (conferma)</label><input type="text" id="f-firma-nome" placeholder="Nome e cognome del firmatario"></div>
-          </div>
-          <label style="font-size:13px;font-weight:600;color:var(--gray);margin-bottom:6px;display:block;">Firma</label>
-          <canvas id="signature-canvas" width="600" height="140"></canvas>
-          <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;">
-            <button class="btn-clear-sign" onclick="clearSignature()">🗑️ Cancella firma</button>
-            <span id="sign-status" style="font-size:12px;color:var(--gray);">Firma qui sopra con il dito o il mouse</span>
-          </div>
-        </div>
-      </div>
-
       <!-- SEZIONE FOTO -->
       <div class="section">
         <div class="section-header">📷 Foto sopralluogo</div>
@@ -718,7 +614,7 @@
           </div>
         </div>
       </div>
-
+    </div>
     <div class="bottom-bar">
       <button class="btn-draft" onclick="saveSurvey('bozza')">💾 Salva bozza</button>
       <button class="btn-save" onclick="saveSurvey('completo')">✅ Completa</button>
@@ -765,16 +661,6 @@
         <button class="btn-save" onclick="addUser()">Aggiungi utente</button>
       </div>
       <div id="users-list"><div class="loader">Caricamento...</div></div>
-      <div class="add-user-form" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;">
-        <div class="add-user-title">🛠️ Strumenti amministratore</div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
-          <button class="btn-save" style="background:#1565c0;" onclick="exportBackup()">📥 Esporta backup</button>
-          <button class="btn-save" style="background:#2e7d32;" onclick="document.getElementById('import-file').click()">📤 Importa backup</button>
-          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(this)">
-          <button class="btn-save" style="background:#c62828;" onclick="confirmClearDB()">🗑️ Svuota database</button>
-        </div>
-        <p style="font-size:12px;color:var(--gray);margin-top:10px;">Il backup esporta tutti i sopralluoghi in formato JSON. Lo svuotamento è irreversibile e non elimina utenti né foto.</p>
-      </div>
     </div>
   </div>
 
@@ -815,9 +701,6 @@ let deleteId = null;
 let currentType = 'residenziale';
 const toggles = {};
 const checks = {};
-let layoutBase64 = null;
-let signatureData = null;
-let isDrawing = false, lastX = 0, lastY = 0;
 
 // ══ API ══
 async function api(method, path, body) {
@@ -862,7 +745,9 @@ function startApp() {
   document.getElementById('login-view').style.display = 'none';
   document.getElementById('app-shell').classList.add('active');
   document.getElementById('user-badge').textContent = currentUser.name;
-  document.getElementById('tab-users').style.display = currentUser.role === 'admin' ? '' : 'none';
+  if (currentUser.role === 'admin') {
+    document.getElementById('tab-users').style.display = '';
+  }
   switchTab('dashboard');
 }
 
@@ -952,6 +837,8 @@ function readForm() {
     type: currentType, status:'bozza',
     ditta:document.getElementById('f-ditta').value,
     tecnico:document.getElementById('f-tecnico').value,
+    dataAppuntamento:document.getElementById('f-dataAppuntamento').value,
+    oraAppuntamento:document.getElementById('f-oraAppuntamento').value,
     data:document.getElementById('f-data').value,
     localita:document.getElementById('f-localita').value,
     cliente:document.getElementById('f-cliente').value,
@@ -998,35 +885,20 @@ function readForm() {
     posInverter:document.getElementById('f-pos-inverter').value,
     posBatteria:document.getElementById('f-pos-batteria').value,
     posColonnina:document.getElementById('f-pos-colonnina').value,
-    calataPercorso:getChecks('calata-percorso'), calataForatura:getChecks('calata-foratura'), noteCalata:document.getElementById('f-note-calata').value,
-    dcMt:document.getElementById('f-dc-mt').value, dcSez:document.getElementById('f-dc-sez').value, dcPercorso:getChecks('dc-percorso'), noteDc:document.getElementById('f-note-dc').value,
-    acMt:document.getElementById('f-ac-mt').value, acSez:document.getElementById('f-ac-sez').value, acPercorso:getChecks('ac-percorso'), noteAc:document.getElementById('f-note-ac').value,
+    calata:getChecks('calata'), noteCalata:document.getElementById('f-note-calata').value,
     wifi:getChecks('wifi'), noteWifi:document.getElementById('f-note-wifi').value,
-    backup:getToggle('backup'), backupTipo:getToggle('backupTipo'),
+    backup:getChecks('backup'), noteBackup:document.getElementById('f-note-backup').value,
     lavoriCliente:document.getElementById('f-lavori-cliente').value,
     potContatore:document.getElementById('f-pot-contatore').value,
     giorniLavori:document.getElementById('f-giorni-lavori').value,
     noteFinali:document.getElementById('f-note-finali').value,
-    layoutImpianto:layoutBase64||null,
-    firmaClienteNome:document.getElementById('f-firma-nome').value,
-    firmaCliente:signatureData||null,
   };
-}
-
-function showBackupTipo(show) {
-  const el = document.getElementById('backup-tipo-group');
-  if(el) el.style.display = show ? '' : 'none';
-}
-
-function checkSPI() {
-  const kw = parseFloat(document.getElementById('f-kw').value);
-  document.getElementById('spi-alert').style.display = (!isNaN(kw) && kw >= 12) ? 'block' : 'none';
 }
 
 function populateForm(s) {
   setType(s.type||'residenziale');
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
-  set('f-ditta',s.ditta); set('f-tecnico',s.tecnico); set('f-data',s.data); set('f-localita',s.localita);
+  set('f-ditta',s.ditta); set('f-tecnico',s.tecnico); set('f-dataAppuntamento',s.dataAppuntamento); set('f-oraAppuntamento',s.oraAppuntamento); set('f-data',s.data); set('f-localita',s.localita);
   set('f-cliente',s.cliente); set('f-telefono',s.telefono); set('f-kw',s.kw);
   set('f-pannelli',s.pannelli); set('f-inverter',s.inverter); set('f-accumulo',s.accumulo);
   set('f-colonnina-mod',s.colonninaModello); set('f-pot-contrattuale',s.potContrattuale);
@@ -1039,12 +911,10 @@ function populateForm(s) {
   set('f-inv-esis-num',s.invEsisNum); set('f-inv-esis-mod',s.invEsisMod);
   set('f-batt-esis-num',s.battEsisNum); set('f-batt-esis-mod',s.battEsisMod);
   set('f-pos-inverter',s.posInverter); set('f-pos-batteria',s.posBatteria); set('f-pos-colonnina',s.posColonnina);
-  set('f-note-calata',s.noteCalata); set('f-note-wifi',s.noteWifi);
+  set('f-note-calata',s.noteCalata); set('f-note-wifi',s.noteWifi); set('f-note-backup',s.noteBackup);
   set('f-lavori-cliente',s.lavoriCliente); set('f-pot-contatore',s.potContatore); set('f-giorni-lavori',s.giorniLavori);
   set('f-note-finali',s.noteFinali);
   ['fornitura','batteria','ottimizzatori','colonnina','cabina','gse','guaina','cesta','m2','pan-esis','inv-esis','batt-esis'].forEach(k=>{if(s[k.replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]||toggles[k]) setToggle(k,s[k.replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]||'');});
-  if(s.backup){setToggle('backup',s.backup);showBackupTipo(s.backup==='si');}
-  if(s.backupTipo) setToggle('backupTipo',s.backupTipo);
   // Manual toggle restore
   if(s.fornitura) setToggle('fornitura',s.fornitura);
   if(s.batteria) setToggle('batteria',s.batteria);
@@ -1069,28 +939,9 @@ function populateForm(s) {
   setChecks('sicurezza',s.sicurezza||'');
   setChecks('terra',s.terra||'',true);
   setChecks('interruttore',s.interruttore||'',true);
-  setChecks('calata-percorso',s.calataPercorso||'',true);
-  setChecks('calata-foratura',s.calataForatura||'',true);
-  set('f-dc-mt',s.dcMt); set('f-dc-sez',s.dcSez); set('f-note-dc',s.noteDc);
-  setChecks('dc-percorso',s.dcPercorso||'');
-  set('f-ac-mt',s.acMt); set('f-ac-sez',s.acSez); set('f-note-ac',s.noteAc);
-  setChecks('ac-percorso',s.acPercorso||'');
+  setChecks('calata',s.calata||'',true);
   setChecks('wifi',s.wifi||'',true);
   setChecks('backup',s.backup||'',true);
-  // Layout
-  layoutBase64=s.layoutImpianto||null;
-  renderLayoutPreview();
-  // Firma
-  set('f-firma-nome',s.firmaClienteNome);
-  if(s.firmaCliente){
-    const canvas=document.getElementById('signature-canvas');
-    if(canvas){
-      const img=new Image();
-      img.onload=()=>{canvas.getContext('2d').drawImage(img,0,0);signatureData=s.firmaCliente;const st=document.getElementById('sign-status');if(st){st.textContent='✅ Firma acquisita';st.style.color='#2e7d32';}};
-      img.src=s.firmaCliente;
-    }
-  }
-  checkSPI();
 }
 
 function resetForm() {
@@ -1100,12 +951,6 @@ function resetForm() {
   document.querySelectorAll('.check-item').forEach(i=>i.classList.remove('selected'));
   document.querySelectorAll('input[type="text"],input[type="number"],input[type="date"],textarea').forEach(el=>el.value='');
   setType('residenziale');
-  layoutBase64=null; renderLayoutPreview();
-  const sc=document.getElementById('signature-canvas');
-  if(sc){sc.getContext('2d').clearRect(0,0,sc.width,sc.height);}
-  signatureData=null;
-  const ss=document.getElementById('sign-status');
-  if(ss){ss.textContent='Firma qui sopra con il dito o il mouse';ss.style.color='';}
 }
 
 // ══ SURVEYS ══
@@ -1125,19 +970,9 @@ function renderDashboard() {
   renderCards(document.getElementById('search-input').value);
 }
 
-let activeFilter='tutti';
-function setFilter(f){
-  activeFilter=f;
-  ['tutti','bozza','completo'].forEach(k=>{
-    document.getElementById('f-'+k)?.classList.toggle('active',k===f);
-  });
-  renderCards(document.getElementById('search-input').value);
-}
-
 function renderCards(q='') {
   const list=document.getElementById('card-list');
   const filtered=surveys.filter(s=>{
-    if(activeFilter!=='tutti' && s.status!==activeFilter) return false;
     if(!q) return true;
     return `${s.cliente} ${s.tecnico} ${s.localita} ${s.ditta} ${s.createdByName}`.toLowerCase().includes(q.toLowerCase());
   });
@@ -1171,7 +1006,6 @@ function newSurvey() {
   showView('form-view');
   loadFotoSection();
   window.scrollTo(0,0);
-  setTimeout(initSignaturePad,100);
 }
 
 function editSurvey(id) {
@@ -1182,7 +1016,6 @@ function editSurvey(id) {
   showView('form-view');
   loadFotoSection();
   window.scrollTo(0,0);
-  setTimeout(initSignaturePad,100);
 }
 
 async function saveSurvey(status) {
@@ -1195,7 +1028,7 @@ async function saveSurvey(status) {
     }
     showToast(status==='completo'?'✅ Sopralluogo completato!':'💾 Bozza salvata');
     await loadSurveys();
-    goBackToDash();
+    loadFotoSection(); // ricarica sezione foto (ora editId è disponibile)
   } catch(e) { showToast('❌ Errore: '+e.message); }
 }
 
@@ -1228,44 +1061,6 @@ async function loadUsers() {
         ${u.id!==currentUser.id?`<button class="btn-icon danger" onclick="deleteUser('${u.id}','${u.name}')">🗑️</button>`:'<span style="font-size:12px;color:var(--gray)">tu</span>'}
       </div>`).join('');
   } catch(e) { showToast('❌ '+e.message); }
-}
-
-async function exportBackup() {
-  try {
-    const data = await api('GET', '/api/admin/backup');
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const date = new Date().toISOString().slice(0,10);
-    a.href = url; a.download = `backup_ftv_${date}.json`;
-    a.click(); URL.revokeObjectURL(url);
-    alert(`✅ Backup esportato: ${data.surveys.length} sopralluoghi, ${data.users.length} utenti.`);
-  } catch(e) { alert('Errore export: ' + e.message); }
-}
-
-async function importBackup(input) {
-  const file = input.files[0]; if (!file) return;
-  input.value = '';
-  try {
-    const text = await file.text();
-    const data = JSON.parse(text);
-    if (!data.surveys && !data.users) { alert('File non valido.'); return; }
-    const res = await api('POST', '/api/admin/restore', data);
-    alert(`✅ Importazione completata!\n\nSopralluoghi aggiunti: ${res.addedSurveys} (saltati: ${res.skippedSurveys})\nUtenti aggiunti: ${res.addedUsers} (saltati: ${res.skippedUsers})`);
-    loadSurveys();
-  } catch(e) { alert('Errore importazione: ' + e.message); }
-}
-
-async function confirmClearDB() {
-  const confirm1 = confirm('⚠️ Sei sicuro di voler eliminare TUTTI i sopralluoghi?\n\nQuesta operazione è IRREVERSIBILE.\n\nGli utenti NON verranno eliminati.');
-  if (!confirm1) return;
-  const confirm2 = confirm('Ultima conferma: eliminare definitivamente tutti i sopralluoghi?');
-  if (!confirm2) return;
-  try {
-    await api('DELETE', '/api/admin/surveys');
-    alert('✅ Database sopralluoghi svuotato.');
-    loadSurveys();
-  } catch(e) { alert('Errore: ' + e.message); }
 }
 
 async function addUser() {
@@ -1435,180 +1230,109 @@ function closeLightbox() {
   document.getElementById('lightbox-img').src = '';
 }
 
-// ══ LAYOUT ══
-function handleLayoutInput(event) {
-  const file = event.target.files[0]; if(!file) return;
-  showToast('⏳ Caricamento layout...');
-  if(file.type==='application/pdf') {
-    const reader = new FileReader();
-    reader.onload = async e => {
-      try {
-        const pdfjsLib = window.pdfjsLib;
-        if(!pdfjsLib){showToast('⚠️ PDF.js non disponibile');return;}
-        pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        const pdf = await pdfjsLib.getDocument({data:e.target.result}).promise;
-        const page = await pdf.getPage(1);
-        const viewport = page.getViewport({scale:1.8});
-        const canvas = document.createElement('canvas');
-        canvas.width=viewport.width; canvas.height=viewport.height;
-        await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
-        layoutBase64 = canvas.toDataURL('image/jpeg',0.85);
-        renderLayoutPreview(); showToast('✅ Layout PDF caricato');
-      } catch(err){ showToast('❌ Errore PDF: '+err.message); }
-    };
-    reader.readAsArrayBuffer(file);
-  } else {
-    compressImage(file,1600,0.85).then(blob=>{
-      const r=new FileReader();
-      r.onload=e=>{layoutBase64=e.target.result;renderLayoutPreview();showToast('✅ Layout caricato');};
-      r.readAsDataURL(blob);
-    });
-  }
-}
-
-function renderLayoutPreview() {
-  const ph=document.getElementById('layout-placeholder');
-  const img=document.getElementById('layout-preview-img');
-  const btn=document.getElementById('btn-remove-layout');
-  if(!ph||!img) return;
-  if(layoutBase64){
-    ph.style.display='none'; img.src=layoutBase64; img.style.display='block'; if(btn) btn.style.display='';
-  } else {
-    ph.style.display=''; img.style.display='none'; img.src=''; if(btn) btn.style.display='none';
-  }
-}
-
-function removeLayout() {
-  layoutBase64=null;
-  const fi=document.getElementById('layout-file-input'); if(fi) fi.value='';
-  renderLayoutPreview();
-}
-
-// ══ FIRMA ══
-function initSignaturePad() {
-  const canvas=document.getElementById('signature-canvas');
-  if(!canvas||canvas._signInit) return;
-  canvas._signInit=true;
-  const ctx=canvas.getContext('2d');
-  ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.strokeStyle='#1a237e';
-
-  function getPos(e){
-    const rect=canvas.getBoundingClientRect();
-    const sx=canvas.width/rect.width, sy=canvas.height/rect.height;
-    const src=e.touches?e.touches[0]:e;
-    return[(src.clientX-rect.left)*sx,(src.clientY-rect.top)*sy];
-  }
-  canvas.addEventListener('mousedown',e=>{isDrawing=true;[lastX,lastY]=getPos(e);});
-  canvas.addEventListener('mousemove',e=>{
-    if(!isDrawing)return;
-    const[x,y]=getPos(e);
-    ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();
-    [lastX,lastY]=[x,y];
-  });
-  canvas.addEventListener('mouseup',()=>{isDrawing=false;_saveSign();});
-  canvas.addEventListener('mouseleave',()=>{isDrawing=false;});
-  canvas.addEventListener('touchstart',e=>{e.preventDefault();isDrawing=true;[lastX,lastY]=getPos(e);},{passive:false});
-  canvas.addEventListener('touchmove',e=>{
-    e.preventDefault();if(!isDrawing)return;
-    const[x,y]=getPos(e);
-    ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();
-    [lastX,lastY]=[x,y];
-  },{passive:false});
-  canvas.addEventListener('touchend',e=>{e.preventDefault();isDrawing=false;_saveSign();},{passive:false});
-}
-
-function _saveSign(){
-  const canvas=document.getElementById('signature-canvas'); if(!canvas) return;
-  signatureData=canvas.toDataURL('image/png');
-  const st=document.getElementById('sign-status');
-  if(st){st.textContent='✅ Firma acquisita';st.style.color='#2e7d32';}
-}
-
-function clearSignature(){
-  const canvas=document.getElementById('signature-canvas'); if(!canvas) return;
-  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
-  signatureData=null;
-  const st=document.getElementById('sign-status');
-  if(st){st.textContent='Firma qui sopra con il dito o il mouse';st.style.color='';}
-}
-
-
 // ══ REPORT ══
 function row(label,value,cls=''){if(!value)return'';return`<tr><th>${label}</th><td class="rv ${cls}">${value}</td></tr>`;}
 function yesno(val){if(!val)return'—';if(val==='si')return'<span class="rv yes">✅ Sì</span>';if(val==='no')return'<span class="rv no">❌ No</span>';return val;}
 
 function renderReport(s, photos=[]) {
   const dateFmt=s.data?new Date(s.data+'T12:00:00').toLocaleDateString('it-IT'):'—';
-  let subtitle = 'IMPIANTO FOTOVOLTAICO';
-  if(s.batteria==='si') subtitle += ' + SISTEMA DI ACCUMULO';
-  if(s.colonnina==='si') subtitle += ' + WALLBOX';
-  const td = (label,val) => val?`<tr><td style="border:1px solid #cfd8dc;padding:8px 12px;font-weight:700;width:40%;font-size:13px;">${label}</td><td style="border:1px solid #cfd8dc;padding:8px 12px;font-size:13px;">${val}</td></tr>`:'';
-  const sH = (num,title) => `<div style="font-size:17px;font-weight:800;color:#2e7d32;border-bottom:2px solid #2e7d32;padding-bottom:4px;margin:28px 0 14px;">${num}. ${title}</div>`;
-  const tHead = (label) => `<div style="background:#2e7d32;color:white;padding:7px 12px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-radius:4px 4px 0 0;">${label}</div>`;
-  const tWrap = (rows) => `<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">${rows}</table>`;
-  const abType=(s.abitazione||'').toLowerCase();
-  const struttura=(s.struttura||'').toLowerCase();
-  const stato=(s.statoCopertura||'').replace(/[^\w\s]/g,'').trim().toLowerCase();
-  const guaina=s.guaina==='si'?'con guaina impermeabilizzante':s.guaina==='no'?'senza guaina impermeabilizzante':'';
-  const coperType=(s.tetto||'').toLowerCase(); const coperMat=(s.copertura||'').toLowerCase();
-  let narrative='';
-  if(abType||s.localita){
-    narrative=`L'immobile oggetto dell'installazione è ${abType?'un '+abType:'un edificio'} ${s.piani?'di '+s.piani+' piani':''} ubicato in ${s.localita||'—'}.`;
-    if(struttura) narrative+=` Il solaio è in ${struttura}.`;
-    if(coperType||coperMat) narrative+=` La copertura è di tipo ${coperType}${coperMat?' con '+coperMat:''}${stato?' in stato '+stato+' di conservazione':''}${guaina?', '+guaina:''}.`;
-    if(s.noteCopertura) narrative+=' '+s.noteCopertura;
-  }
-  const paMtSez=[s.paMt?s.paMt+' mt':'',s.paSez?s.paSez+' mm²':''].filter(Boolean).join(' · ');
-  const box=(c,label,sub)=>`<div style="flex:1;background:${c==='g'?'#e8f5e9':'#e3f2fd'};border:1.5px solid ${c==='g'?'#2e7d32':'#1565c0'};border-radius:6px;padding:10px 6px;text-align:center;font-size:11px;font-weight:700;color:${c==='g'?'#2e7d32':'#1565c0'};">${label}${sub?'<div style="font-size:10px;font-weight:400;margin-top:3px;">'+sub+'</div>':''}</div>`;
-  const arr=`<div style="display:flex;align-items:center;padding:0 5px;color:#1565c0;font-size:20px;font-weight:700;">→</div>`;
-  const schema=`<div style="display:flex;align-items:center;margin:14px 0 18px;">${box('b','ENEL',paMtSez||null)}${arr}${box('b','Q. GEN.<br>ABITAZIONE',s.pbMt?s.pbMt+' mt':null)}${arr}${box('b','INVERTER<br>GEN. FTV',s.invMt?s.invMt+' mt':null)}${arr}${box('g','PANNELLI FV',s.pannelli||null)}</div>`;
-  // Layout section
-  let layoutHtml=''; let secNum=3;
-  if(s.layoutImpianto){
-    layoutHtml=`${sH(secNum++,'LAYOUT POSIZIONAMENTO IMPIANTO')}<div style="text-align:center;margin-bottom:20px;"><img src="${s.layoutImpianto}" style="max-width:100%;border-radius:4px;border:1px solid #cfd8dc;"></div>`;
-  }
-  // Foto section
-  let fotoHtml='';
-  if(photos.length){
-    const cats=FOTO_CATEGORIE.filter(c=>photos.some(p=>p.category===c.id));
-    if(cats.length){
-      let figN=1; fotoHtml=sH(secNum++,'RILIEVO FOTOGRAFICO');
-      fotoHtml+=cats.map((cat,ci)=>{
-        const cp=photos.filter(p=>p.category===cat.id);
-        const catL=cat.label.replace(/[\u{1F300}-\u{1FFFF}]/gu,'').trim();
-        const imgs=cp.map(p=>{
-          const fig=figN++;
-          return `<div style="break-inside:avoid;text-align:center;"><img src="${p.url}" style="width:100%;border-radius:4px;border:1px solid #cfd8dc;display:block;"><div style="font-size:10px;font-style:italic;color:#546e7a;margin-top:3px;">Fig. ${fig}${p.nota?' — '+p.nota:''}</div></div>`;
-        }).join('');
-        return `<div style="margin-bottom:16px;"><div style="font-size:13px;font-weight:700;color:#2e7d32;border-left:4px solid #2e7d32;padding-left:10px;margin:12px 0 8px;">${catL}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;">${imgs}</div></div>`;
-      }).join('');
-    }
-  }
-  const sn=secNum;
-  // Firma
-  const firmaClienteHtml=s.firmaCliente?`<img src="${s.firmaCliente}" style="max-height:64px;max-width:220px;display:block;margin-bottom:4px;">`:'' ;
-  const firmaMarginTop=s.firmaCliente?'':'margin-top:52px;';
+  const typeLabel=s.type==='ci'?'Commerciale / Industriale':'Residenziale';
   document.getElementById('report-doc').innerHTML=`
-  <div style="text-align:center;padding-bottom:24px;border-bottom:3px solid #2e7d32;margin-bottom:24px;">
-    <div style="font-size:28px;font-weight:900;color:#2e7d32;letter-spacing:3px;margin-bottom:8px;">ANTES SRL</div>
-    <div style="font-size:22px;font-weight:800;color:#263238;margin-bottom:4px;">RELAZIONE DI SOPRALLUOGO</div>
-    <div style="font-size:13px;font-weight:600;color:#546e7a;letter-spacing:.5px;">${subtitle}</div>
+  <div class="report-logo-row">
+    <div><div class="report-logo">☀️ Sopralluogo FTV <span>MODULO SOPRALLUOGO PER IMPIANTO FOTOVOLTAICO</span></div></div>
+    <div class="report-title-right"><div>${typeLabel}</div><div style="font-size:11px;color:var(--gray)">VERS. 2026-1</div></div>
   </div>
-  ${tHead('DATI DEL SOPRALLUOGO')}${tWrap(td('Committente',s.ditta)+td('Cliente',s.cliente)+td('Indirizzo',s.localita)+td('Data sopralluogo',dateFmt)+td('Tecnico incaricato',s.tecnico)+td('Contatto',s.telefono?'Tel. '+s.telefono:''))}
-  ${parseFloat(s.kw)>=12?`<div style="margin-bottom:20px;padding:14px 18px;background:#fff3e0;border-left:5px solid #f57c00;border-radius:6px;"><div style="font-size:14px;font-weight:800;color:#e65100;margin-bottom:4px;">⚠️ ATTENZIONE — SPI ESTERNA OBBLIGATORIA</div><div style="font-size:13px;color:#bf360c;">Potenza impianto ≥ 12 kW (${s.kw} kWp) — È necessario installare un Sistema di Protezione dell'Interfaccia (SPI) esterno secondo normativa <strong>CEI 0-21</strong>.</div></div>`:''}
-  ${sH(1,"DATI IMPIANTO PROPOSTO")}${tHead('COMPONENTI IMPIANTO')}${tWrap(td('Tipo di rete',s.fornitura?s.fornitura.charAt(0).toUpperCase()+s.fornitura.slice(1):'')+td('Potenza totale impianto',s.kw?s.kw+' kWp':'')+td('Pannelli fotovoltaici',s.pannelli)+td('Inverter',s.inverter)+td('Sistema di accumulo',s.batteria==='si'?'SI'+(s.accumulo?' - '+s.accumulo:''):s.batteria==='no'?'NO':'')+td('Colonnina ricarica (Wallbox)',s.colonnina==='si'?'SI'+(s.colonninaModello?' - '+s.colonninaModello:''):s.colonnina==='no'?'NO':'')+td('Ottimizzatori di potenza',s.ottimizzatori==='si'?'SI':s.ottimizzatori==='no'?'NO':'')+td('Funzione backup',s.backup==='si'?`<span style="color:#b71c1c;font-weight:800;">✅ SÌ — ${s.backupTipo==='tutta'?'Tutta la casa':s.backupTipo==='parziale'?'Parziale':'da definire'}</span>`:s.backup==='no'?'No':''))}
-  ${sH(2,"DESCRIZIONE DELL'EDIFICIO")}${narrative?`<p style="font-size:13px;line-height:1.7;margin-bottom:14px;text-align:justify;">${narrative}</p>`:''}${tHead('CARATTERISTICHE EDIFICIO')}${tWrap(td('Tipo di abitazione',s.abitazione)+td('Numero di piani',s.piani)+td('Altezza grondaia',s.altezza?s.altezza+' mt':'')+td('Tipo di tetto',s.tetto)+td('Tipo di copertura',s.copertura)+td('Solaio',s.struttura)+td('Guaina impermeabilizzante',s.guaina==='si'?'SI':s.guaina==='no'?'NO':'')+td('Stato della copertura',(s.statoCopertura||'').replace(/[^\w\s]/g,'').trim().toUpperCase()))}
-  ${layoutHtml}
-  ${fotoHtml}
-  ${sH(sn,"SCHEMA SEMPLIFICATO DELL'IMPIANTO")}<p style="font-size:13px;margin-bottom:10px;">Schema dell'impianto fotovoltaico rilevato durante il sopralluogo.</p>${schema}${tWrap(td('Potenza contatore esistente',s.potContatore?s.potContatore+' kW':'')+td('Impianto di terra esistente',s.terra?s.terra+(s.terraSezione?' — Sez. '+s.terraSezione+' mm²':''):'')+td('Interruttore generale',s.interruttore?s.interruttore+(s.interruttoreModello?' — '+s.interruttoreModello:''):'')+((s.acMt||s.acSez)?td('Linea AC',(s.acMt?s.acMt+' mt':'')+(s.acSez?' — Sez. '+s.acSez+' mm²':'')+(s.acPercorso?' — '+s.acPercorso:'')+(s.noteAc?' — '+s.noteAc:'')):'')+(( s.dcMt||s.dcSez)?td('Linea DC',(s.dcMt?s.dcMt+' mt':'')+(s.dcSez?' — Sez. '+s.dcSez+' mm²':'')+(s.dcPercorso?' — '+s.dcPercorso:'')+(s.noteDc?' — '+s.noteDc:'')):''))}
-  ${sH(sn+1,"MESSA IN SICUREZZA")}${tWrap(td('Metodo di messa in sicurezza',s.sicurezza||'')+td('Utilizzo cesta',s.cesta?yesno(s.cesta)+( s.cestaGiorni?' — '+s.cestaGiorni+' giorni':'')+(s.cestaSu?' su '+s.cestaSu:''):'')+td('Altro',s.sicurezzaAltro||''))}
-  ${sH(sn+2,"NOTE TECNICHE E OSSERVAZIONI")}${tWrap(td('Calata stringhe',[s.calataPercorso,s.calataForatura,s.noteCalata].filter(Boolean).join(' — '))+td('Posizionamento inverter',s.posInverter||'')+((s.batteria==='si')?td('Posizionamento batteria',s.posBatteria||''):'')+((s.colonnina==='si')?td('Posizionamento Wallbox',s.posColonnina||''):'')+td('Connessione internet',[s.wifi,s.noteWifi].filter(Boolean).join(' — '))+td('Funzione backup',s.backup||'')+td('Eventuali lavori a carico cliente',s.lavoriCliente||'')+td('Note riservate (ufficio)',s.noteFinali||''))}
-  ${sH(sn+3,"STIMA TEMPI DI INSTALLAZIONE")}${tWrap(td('Giorni necessari per fine lavori',s.giorniLavori?s.giorniLavori+' giorni lavorativi':''))}
-  <div style="display:flex;gap:40px;margin-top:40px;padding-top:20px;border-top:2px solid #cfd8dc;">
-    <div style="flex:1;font-size:13px;"><div style="font-weight:700;margin-bottom:60px;">Firma Tecnico</div><div style="border-bottom:1.5px solid #263238;"></div><div style="font-size:11px;color:#546e7a;margin-top:4px;">${s.tecnico||''}</div></div>
-    <div style="flex:1;font-size:13px;"><div style="font-weight:700;margin-bottom:8px;">Per Conferma Cliente</div>${firmaClienteHtml}<div style="border-bottom:1.5px solid #263238;${firmaMarginTop}"></div><div style="font-size:11px;color:#546e7a;margin-top:4px;">${s.firmaClienteNome||s.cliente||''}</div></div>
-  </div>
-  <div style="font-size:10px;color:#546e7a;text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #eceff1;">ANTES SRL — Relazione di Sopralluogo — ${s.cliente||'—'} — ${s.localita||'—'}</div>`;
+  <div class="report-section-title">📋 Informazioni generali</div>
+  <table class="report-table">
+    ${row('Ditta committente',s.ditta)}${row('Nome tecnico',s.tecnico)}
+    ${s.dataAppuntamento?row('Data appuntamento',s.dataAppuntamento.split('-').reverse().join('/')+(s.oraAppuntamento?' ore '+s.oraAppuntamento:'')):''}
+    ${row('Data sopralluogo',dateFmt)}${row('Località',s.localita)}
+    ${row('Cliente',s.cliente)}${row('Telefono',s.telefono)}
+    ${s.createdByName?row('Inserito da',s.createdByName):''}
+  </table>
+  <div class="report-section-title">⚡ Impianto proposto</div>
+  <table class="report-table">
+    ${row('Tipo fornitura',s.fornitura?s.fornitura.charAt(0).toUpperCase()+s.fornitura.slice(1):'')}
+    ${row('Potenza totale',s.kw?s.kw+' kW':'')}
+    ${row('Pannelli',s.pannelli)}${row('Inverter',s.inverter)}
+    ${row('Batteria',yesno(s.batteria))}${s.batteria==='si'?row('Potenza accumulo',s.accumulo):''}
+    ${row('Ottimizzatori',yesno(s.ottimizzatori))}
+    ${row('Colonnina ricarica',yesno(s.colonnina))}${s.colonnina==='si'?row('Modello colonnina',s.colonninaModello):''}
+    ${s.type==='ci'?row('Potenza contrattuale',s.potContrattuale?s.potContrattuale+' kW':''):''}
+    ${s.type==='ci'?row('Connessione rete',s.connessioneRete):''}
+    ${s.type==='ci'?row('Cabina MT/BT',yesno(s.cabina)):''}
+    ${s.type==='ci'?row('Accordo GSE',s.gse?(s.gse==='ssp'?'Scambio sul posto':'Ritiro dedicato'):''):''}
+  </table>
+  <div class="report-section-title">🏠 Abitazione e copertura</div>
+  <table class="report-table">
+    ${row('Tipo abitazione',s.abitazione)}${row('Numero piani',s.piani)}
+    ${row('Altezza grondaia',s.altezza?s.altezza+' mt':'')}
+    ${row('Tipo tetto',s.tetto)}${row('Tipo copertura',s.copertura)}
+    ${row('Tipo struttura',s.struttura)}${row('Guaina',yesno(s.guaina))}
+    ${row('Stato copertura',s.statoCopertura)}${row('Note copertura',s.noteCopertura)}
+  </table>
+  <div class="report-section-title orange">🦺 Messa in sicurezza</div>
+  <table class="report-table">
+    ${row('Utilizzo cesta',yesno(s.cesta))}${s.cesta==='si'?row('Giorni cesta',s.cestaGiorni):''}
+    ${row('Cesta su',s.cestaSu)}${row('Attrezzatura',s.sicurezza)}${row('Altro',s.sicurezzaAltro)}
+  </table>
+  <div class="report-section-title blue">🔌 Impianto elettrico</div>
+  <table class="report-table">
+    ${row('Impianto di terra',s.terra)}${row('Sezione terra',s.terraSezione?s.terraSezione+' mm²':'')}
+    ${row('Interruttore generale',s.interruttore)}${row('Modello interruttore',s.interruttoreModello)}
+  </table>
+  <div style="margin-bottom:8px"><strong style="font-size:13px;color:var(--gray)">SCHEMA SEMPLIFICATO IMPIANTO</strong></div>
+  <table class="report-table" style="margin-bottom:16px">
+    <tr><th>ENEL → Q.Gen. Abitaz.<br><small>Distanza / Sez. cavo</small></th><td>${s.paMt||'—'} mt &nbsp;|&nbsp; ${s.paSez||'—'} mm²</td></tr>
+    <tr><th>Q.Gen. → Inverter<br><small>Distanza</small></th><td>${s.pbMt||'—'} mt</td></tr>
+    <tr><th>Inverter → Pannelli FTV<br><small>Distanza</small></th><td>${s.invMt||'—'} mt</td></tr>
+    <tr><th>Contatore M2</th><td>${yesno(s.m2)}${s.m2Sez?' &nbsp;|&nbsp; Sez. '+s.m2Sez+' mm²':''}</td></tr>
+  </table>
+  ${s.noteElettrico?`<table class="report-table" style="margin-bottom:16px">${row('Note impianto elettrico',s.noteElettrico)}</table>`:''}
+  <div class="report-section-title">🔁 Apparati esistenti</div>
+  <table class="report-table">
+    <tr><th>Pannelli esistenti</th><td>${yesno(s.panEsis)}${s.panEsisNum?' — n° '+s.panEsisNum:''}${s.panEsisMod?' — '+s.panEsisMod:''}</td></tr>
+    <tr><th>Inverter esistente</th><td>${yesno(s.invEsis)}${s.invEsisNum?' — n° '+s.invEsisNum:''}${s.invEsisMod?' — '+s.invEsisMod:''}</td></tr>
+    <tr><th>Batteria esistente</th><td>${yesno(s.battEsis)}${s.battEsisNum?' — n° '+s.battEsisNum:''}${s.battEsisMod?' — '+s.battEsisMod:''}</td></tr>
+  </table>
+  <div class="report-section-title">📍 Posizionamenti e logistica</div>
+  <table class="report-table">
+    ${row('Pos. nuovo inverter',s.posInverter)}${row('Pos. nuova batteria',s.posBatteria)}
+    ${row('Pos. colonnina',s.posColonnina)}${row('Calata stringhe',s.calata)}${row('Note calata',s.noteCalata)}
+  </table>
+  <div class="report-section-title blue">📶 Connettività e backup</div>
+  <table class="report-table">
+    ${row('Connessione internet',s.wifi)}${row('Note connettività',s.noteWifi)}
+    ${row('Funzione backup',s.backup)}${row('Note backup',s.noteBackup)}
+  </table>
+  <div class="report-section-title orange">📝 Lavori e chiusura</div>
+  <table class="report-table">
+    ${row('Lavori a carico cliente',s.lavoriCliente)}
+    ${row('Potenza contatore',s.potContatore?s.potContatore+' kW':'')}
+    ${row('Stima giorni',s.giorniLavori)}
+    ${row('Note riservate (ufficio)',s.noteFinali)}
+  </table>
+  ${photos.length ? (() => {
+    const catsWithPhotos = FOTO_CATEGORIE.filter(c => photos.some(p => p.category === c.id));
+    if (!catsWithPhotos.length) return '';
+    return `<div class="report-section-title">📷 Foto sopralluogo</div>` +
+      catsWithPhotos.map(cat => {
+        const cp = photos.filter(p => p.category === cat.id);
+        return `<div style="margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:600;color:var(--gray);margin-bottom:8px;">${cat.label} (${cp.length})</div>
+          <div class="report-foto-grid">${cp.map(p=>`
+            <div style="break-inside:avoid;">
+              <img src="${p.url}" style="width:100%;border-radius:6px;border:1px solid #ddd;">
+              ${p.nota?`<div style="font-size:11px;color:var(--gray);margin-top:3px;text-align:center;">${p.nota}</div>`:''}
+            </div>`).join('')}
+          </div></div>`;
+      }).join('');
+  })() : ''}
+  <div class="sign-row">
+    <div class="sign-box"><div class="sign-label">Data: ${dateFmt}</div></div>
+    <div class="sign-box"><div class="sign-label">Firma Tecnico</div><div class="sign-line"></div></div>
+    <div class="sign-box"><div class="sign-label">Firma Cliente</div><div class="sign-line"></div></div>
+  </div>`;
 }
 </script>
 </body>
