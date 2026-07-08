@@ -307,7 +307,7 @@ app.post('/api/users', authMiddleware, adminOnly, (req, res) => {
   if (!name || !email || !password) return res.status(400).json({ error: 'Nome, email e password richiesti' });
   if (password.length < 6) return res.status(400).json({ error: 'Password di almeno 6 caratteri' });
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase().trim());
-  if (existing) return res.status(400).json({ error: 'Email già in uso' });
+  if (existing) return res.status(400).json({ error: 'Email gia in uso' });
   const id = 'u_' + Date.now();
   db.prepare(
     'INSERT INTO users (id, name, email, password, role) VALUES (?, ?, ?, ?, ?)'
