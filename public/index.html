@@ -291,8 +291,7 @@
             <div class="form-group"><label>Ora appuntamento</label><input type="time" id="f-oraAppuntamento"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Data sopralluogo</label><input type="date" id="f-data"></div>
-            <div class="form-group"><label>Località</label><input type="text" id="f-localita" placeholder="Città, Provincia"></div>
+            <div class="form-group"><label>Indirizzo</label><input type="text" id="f-localita" placeholder="Via, Città, Provincia"></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Cliente</label><input type="text" id="f-cliente" placeholder="Nome / Ragione sociale"></div>
@@ -839,7 +838,7 @@ function readForm() {
     tecnico:document.getElementById('f-tecnico').value,
     dataAppuntamento:document.getElementById('f-dataAppuntamento').value,
     oraAppuntamento:document.getElementById('f-oraAppuntamento').value,
-    data:document.getElementById('f-data').value,
+    data:new Date().toISOString().split('T')[0],
     localita:document.getElementById('f-localita').value,
     cliente:document.getElementById('f-cliente').value,
     telefono:document.getElementById('f-telefono').value,
@@ -898,7 +897,7 @@ function readForm() {
 function populateForm(s) {
   setType(s.type||'residenziale');
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
-  set('f-ditta',s.ditta); set('f-tecnico',s.tecnico); set('f-dataAppuntamento',s.dataAppuntamento); set('f-oraAppuntamento',s.oraAppuntamento); set('f-data',s.data); set('f-localita',s.localita);
+  set('f-ditta',s.ditta); set('f-tecnico',s.tecnico); set('f-dataAppuntamento',s.dataAppuntamento); set('f-oraAppuntamento',s.oraAppuntamento); set('f-localita',s.localita);
   set('f-cliente',s.cliente); set('f-telefono',s.telefono); set('f-kw',s.kw);
   set('f-pannelli',s.pannelli); set('f-inverter',s.inverter); set('f-accumulo',s.accumulo);
   set('f-colonnina-mod',s.colonninaModello); set('f-pot-contrattuale',s.potContrattuale);
@@ -1002,7 +1001,7 @@ function newSurvey() {
   editId=null; currentPhotos=[];
   resetForm();
   document.getElementById('form-view-title').textContent='Nuovo sopralluogo';
-  document.getElementById('f-data').value=new Date().toISOString().split('T')[0];
+
   showView('form-view');
   loadFotoSection();
   window.scrollTo(0,0);
@@ -1246,7 +1245,7 @@ function renderReport(s, photos=[]) {
   <table class="report-table">
     ${row('Ditta committente',s.ditta)}${row('Nome tecnico',s.tecnico)}
     ${s.dataAppuntamento?row('Data appuntamento',s.dataAppuntamento.split('-').reverse().join('/')+(s.oraAppuntamento?' ore '+s.oraAppuntamento:'')):''}
-    ${row('Data sopralluogo',dateFmt)}${row('Località',s.localita)}
+    ${row('Indirizzo',s.localita)}
     ${row('Cliente',s.cliente)}${row('Telefono',s.telefono)}
     ${s.createdByName?row('Inserito da',s.createdByName):''}
   </table>
