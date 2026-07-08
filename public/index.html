@@ -660,6 +660,19 @@
         <button class="btn-save" onclick="addUser()">Aggiungi utente</button>
       </div>
       <div id="users-list"><div class="loader">Caricamento...</div></div>
+
+      <!-- BACKUP / RESTORE -->
+      <div class="add-user-form" id="backup-section" style="display:none">
+        <div class="add-user-title">💾 Backup e ripristino dati</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn-save" onclick="doBackup()">⬇ Esporta backup</button>
+          <label class="btn-save" style="cursor:pointer;background:#6c757d">
+            ⬆ Importa backup
+            <input type="file" accept=".json" style="display:none" onchange="doRestore(this)">
+          </label>
+          <button class="btn-danger" style="padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-size:14px" onclick="doDeleteAll()">🗑 Svuota DB</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1049,6 +1062,7 @@ async function confirmDelete() {
 // ══ USERS ══
 async function loadUsers() {
   if(currentUser?.role!=='admin') return;
+  document.getElementById('backup-section').style.display='block';
   try {
     const users=await api('GET','/api/users');
     document.getElementById('users-list').innerHTML=users.map(u=>`
@@ -1081,6 +1095,42 @@ async function deleteUser(id, name) {
   if(!confirm(`Eliminare l'utente ${name}?`)) return;
   try { await api('DELETE','/api/users/'+id); showToast('🗑️ Utente eliminato'); loadUsers(); }
   catch(e) { showToast('❌ '+e.message); }
+}
+
+async function doBackup() {
+  try {
+    const data = await api('GET','/api/admin/backup');
+    const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'backup_ftv_'+new Date().toISOString().split('T')[0]+'.json';
+    a.click();
+    showToast('✅ Backup scaricato');
+  } catch(e) { showToast('❌ '+e.message); }
+}
+
+async function doRestore(input) {
+  const file = input.files[0];
+  if(!file) return;
+  if(!confirm('Importare il backup? I dati esistenti non verranno cancellati, verranno aggiunti quelli mancanti.')) { input.value=''; return; }
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    const res = await api('POST','/api/admin/restore', data);
+    showToast(`✅ Importati: ${res.addedSurveys} sopralluoghi, ${res.addedPhotos} foto`);
+    input.value='';
+    loadSurveys();
+  } catch(e) { showToast('❌ '+e.message); input.value=''; }
+}
+
+async function doDeleteAll() {
+  if(!confirm('ATTENZIONE: questa operazione elimina TUTTI i sopralluoghi e le foto. Continuare?')) return;
+  if(!confirm('Sei sicuro? Non è possibile annullare.')) return;
+  try {
+    await api('DELETE','/api/admin/surveys');
+    showToast('🗑️ Database svuotato');
+    loadSurveys();
+  } catch(e) { showToast('❌ '+e.message); }
 }
 
 // ══ CHANGE PASSWORD ══
