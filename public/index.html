@@ -353,6 +353,20 @@
             </div>
             <div class="form-group"><label>Modello colonnina</label><input type="text" id="f-colonnina-mod" placeholder="Marca e modello"></div>
           </div>
+          <div class="form-row">
+            <div class="form-group half"><label>Funzione backup</label>
+              <div class="toggle-group">
+                <button class="toggle-btn" id="t-backup-si" onclick="setToggle('backup','si');showBackupTipo(true)">Sì</button>
+                <button class="toggle-btn" id="t-backup-no" onclick="setToggle('backup','no');showBackupTipo(false)">No</button>
+              </div>
+            </div>
+            <div class="form-group half" id="backup-tipo-group" style="display:none"><label>Tipo backup</label>
+              <div class="toggle-group">
+                <button class="toggle-btn" id="t-backupTipo-tutta" onclick="setToggle('backupTipo','tutta')">Tutta la casa</button>
+                <button class="toggle-btn" id="t-backupTipo-parziale" onclick="setToggle('backupTipo','parziale')">Parziale</button>
+              </div>
+            </div>
+          </div>
           <div id="ci-extra-impianto" style="display:none">
             <hr style="margin:12px 0;border:none;border-top:1px solid var(--border)">
             <div class="form-row">
@@ -572,6 +586,12 @@
           <div class="form-row"><div class="form-group full"><label>Posizionamento nuovo inverter</label><input type="text" id="f-pos-inverter" placeholder="Es. Locale tecnico, parete nord"></div></div>
           <div class="form-row"><div class="form-group full"><label>Posizionamento nuova batteria</label><input type="text" id="f-pos-batteria" placeholder="Es. Garage, parete laterale"></div></div>
           <div class="form-row"><div class="form-group full"><label>Posizionamento colonnina ricarica</label><input type="text" id="f-pos-colonnina" placeholder="Es. Garage, fianco portone"></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header orange">☀️ Linea DC (Pannelli → Inverter)</div>
+        <div class="section-body">
           <div class="form-row">
             <div class="form-group"><label>Percorso calata stringhe</label>
               <div class="check-group" id="cg-calata-percorso">
@@ -587,12 +607,6 @@
             </div>
           </div>
           <div class="form-row"><div class="form-group full"><label>Note calata stringhe</label><input type="text" id="f-note-calata" placeholder="Percorso cavi..."></div></div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-header orange">☀️ Linea DC (Pannelli → Inverter)</div>
-        <div class="section-body">
           <div class="form-row">
             <div class="form-group half"><label>Distanza (mt)</label><input type="number" id="f-dc-mt" step="0.1" placeholder="Es. 15"></div>
             <div class="form-group half"><label>Sezione cavo (mm²)</label><input type="text" id="f-dc-sez" placeholder="Es. 4"></div>
@@ -647,16 +661,6 @@
             </div>
           </div>
           <div class="form-row"><div class="form-group full"><label>Note connettività</label><input type="text" id="f-note-wifi" placeholder="Es. Router in cucina, segnale debole in garage"></div></div>
-          <div class="form-row">
-            <div class="form-group"><label>Funzione backup</label>
-              <div class="check-group" id="cg-backup">
-                <label class="check-item" onclick="toggleCheck(this,'backup',true)"><input type="checkbox">Tutta la casa</label>
-                <label class="check-item" onclick="toggleCheck(this,'backup',true)"><input type="checkbox">Parziale</label>
-                <label class="check-item" onclick="toggleCheck(this,'backup',true)"><input type="checkbox">Non previsto</label>
-              </div>
-            </div>
-          </div>
-          <div class="form-row"><div class="form-group full"><label>Note backup</label><input type="text" id="f-note-backup" placeholder="Es. Solo carichi essenziali"></div></div>
         </div>
       </div>
 
@@ -998,7 +1002,7 @@ function readForm() {
     dcMt:document.getElementById('f-dc-mt').value, dcSez:document.getElementById('f-dc-sez').value, dcPercorso:getChecks('dc-percorso'), noteDc:document.getElementById('f-note-dc').value,
     acMt:document.getElementById('f-ac-mt').value, acSez:document.getElementById('f-ac-sez').value, acPercorso:getChecks('ac-percorso'), noteAc:document.getElementById('f-note-ac').value,
     wifi:getChecks('wifi'), noteWifi:document.getElementById('f-note-wifi').value,
-    backup:getChecks('backup'), noteBackup:document.getElementById('f-note-backup').value,
+    backup:getToggle('backup'), backupTipo:getToggle('backupTipo'),
     lavoriCliente:document.getElementById('f-lavori-cliente').value,
     potContatore:document.getElementById('f-pot-contatore').value,
     giorniLavori:document.getElementById('f-giorni-lavori').value,
@@ -1007,6 +1011,11 @@ function readForm() {
     firmaClienteNome:document.getElementById('f-firma-nome').value,
     firmaCliente:signatureData||null,
   };
+}
+
+function showBackupTipo(show) {
+  const el = document.getElementById('backup-tipo-group');
+  if(el) el.style.display = show ? '' : 'none';
 }
 
 function checkSPI() {
@@ -1030,10 +1039,12 @@ function populateForm(s) {
   set('f-inv-esis-num',s.invEsisNum); set('f-inv-esis-mod',s.invEsisMod);
   set('f-batt-esis-num',s.battEsisNum); set('f-batt-esis-mod',s.battEsisMod);
   set('f-pos-inverter',s.posInverter); set('f-pos-batteria',s.posBatteria); set('f-pos-colonnina',s.posColonnina);
-  set('f-note-calata',s.noteCalata); set('f-note-wifi',s.noteWifi); set('f-note-backup',s.noteBackup);
+  set('f-note-calata',s.noteCalata); set('f-note-wifi',s.noteWifi);
   set('f-lavori-cliente',s.lavoriCliente); set('f-pot-contatore',s.potContatore); set('f-giorni-lavori',s.giorniLavori);
   set('f-note-finali',s.noteFinali);
   ['fornitura','batteria','ottimizzatori','colonnina','cabina','gse','guaina','cesta','m2','pan-esis','inv-esis','batt-esis'].forEach(k=>{if(s[k.replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]||toggles[k]) setToggle(k,s[k.replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]||'');});
+  if(s.backup){setToggle('backup',s.backup);showBackupTipo(s.backup==='si');}
+  if(s.backupTipo) setToggle('backupTipo',s.backupTipo);
   // Manual toggle restore
   if(s.fornitura) setToggle('fornitura',s.fornitura);
   if(s.batteria) setToggle('batteria',s.batteria);
@@ -1585,7 +1596,7 @@ function renderReport(s, photos=[]) {
   </div>
   ${tHead('DATI DEL SOPRALLUOGO')}${tWrap(td('Committente',s.ditta)+td('Cliente',s.cliente)+td('Indirizzo',s.localita)+td('Data sopralluogo',dateFmt)+td('Tecnico incaricato',s.tecnico)+td('Contatto',s.telefono?'Tel. '+s.telefono:''))}
   ${parseFloat(s.kw)>=12?`<div style="margin-bottom:20px;padding:14px 18px;background:#fff3e0;border-left:5px solid #f57c00;border-radius:6px;"><div style="font-size:14px;font-weight:800;color:#e65100;margin-bottom:4px;">⚠️ ATTENZIONE — SPI ESTERNA OBBLIGATORIA</div><div style="font-size:13px;color:#bf360c;">Potenza impianto ≥ 12 kW (${s.kw} kWp) — È necessario installare un Sistema di Protezione dell'Interfaccia (SPI) esterno secondo normativa <strong>CEI 0-21</strong>.</div></div>`:''}
-  ${sH(1,"DATI IMPIANTO PROPOSTO")}${tHead('COMPONENTI IMPIANTO')}${tWrap(td('Tipo di rete',s.fornitura?s.fornitura.charAt(0).toUpperCase()+s.fornitura.slice(1):'')+td('Potenza totale impianto',s.kw?s.kw+' kWp':'')+td('Pannelli fotovoltaici',s.pannelli)+td('Inverter',s.inverter)+td('Sistema di accumulo',s.batteria==='si'?'SI'+(s.accumulo?' - '+s.accumulo:''):s.batteria==='no'?'NO':'')+td('Colonnina ricarica (Wallbox)',s.colonnina==='si'?'SI'+(s.colonninaModello?' - '+s.colonninaModello:''):s.colonnina==='no'?'NO':'')+td('Ottimizzatori di potenza',s.ottimizzatori==='si'?'SI':s.ottimizzatori==='no'?'NO':'')+td('Funzione backup',s.backup||''))}
+  ${sH(1,"DATI IMPIANTO PROPOSTO")}${tHead('COMPONENTI IMPIANTO')}${tWrap(td('Tipo di rete',s.fornitura?s.fornitura.charAt(0).toUpperCase()+s.fornitura.slice(1):'')+td('Potenza totale impianto',s.kw?s.kw+' kWp':'')+td('Pannelli fotovoltaici',s.pannelli)+td('Inverter',s.inverter)+td('Sistema di accumulo',s.batteria==='si'?'SI'+(s.accumulo?' - '+s.accumulo:''):s.batteria==='no'?'NO':'')+td('Colonnina ricarica (Wallbox)',s.colonnina==='si'?'SI'+(s.colonninaModello?' - '+s.colonninaModello:''):s.colonnina==='no'?'NO':'')+td('Ottimizzatori di potenza',s.ottimizzatori==='si'?'SI':s.ottimizzatori==='no'?'NO':'')+td('Funzione backup',s.backup==='si'?`<span style="color:#1565c0;font-weight:700;">✅ SÌ — ${s.backupTipo==='tutta'?'Tutta la casa':s.backupTipo==='parziale'?'Parziale':'da definire'}</span>`:s.backup==='no'?'No':''))}
   ${sH(2,"DESCRIZIONE DELL'EDIFICIO")}${narrative?`<p style="font-size:13px;line-height:1.7;margin-bottom:14px;text-align:justify;">${narrative}</p>`:''}${tHead('CARATTERISTICHE EDIFICIO')}${tWrap(td('Tipo di abitazione',s.abitazione)+td('Numero di piani',s.piani)+td('Altezza grondaia',s.altezza?s.altezza+' mt':'')+td('Tipo di tetto',s.tetto)+td('Tipo di copertura',s.copertura)+td('Solaio',s.struttura)+td('Guaina impermeabilizzante',s.guaina==='si'?'SI':s.guaina==='no'?'NO':'')+td('Stato della copertura',(s.statoCopertura||'').replace(/[^\w\s]/g,'').trim().toUpperCase()))}
   ${layoutHtml}
   ${fotoHtml}
