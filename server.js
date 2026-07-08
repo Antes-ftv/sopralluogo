@@ -3,6 +3,7 @@ const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
 const path = require('path');
 const fs = require('fs');
 
@@ -10,9 +11,18 @@ const app = express();
 const SECRET = process.env.JWT_SECRET || 'ftv-sopralluogo-secret-2026-cambia-questo';
 const PORT = process.env.PORT || 3000;
 
-// ── CARTELLA UPLOAD ───────────────────────────────────────
+// ── CLOUDINARY ────────────────────────────────────────────
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
+  api_key:    process.env.CLOUDINARY_API_KEY    || '',
+  api_secret: process.env.CLOUDINARY_API_SECRET || ''
+});
+const useCloudinary = !!process.env.CLOUDINARY_CLOUD_NAME;
+console.log(useCloudinary ? '☁️  Cloudinary attivo' : '⚠️  Cloudinary non configurato — foto su disco locale');
+
+// ── CARTELLA UPLOAD LOCALE (fallback) ─────────────────────
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+if (!useCloudinary && !fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 // ── DATABASE ──────────────────────────────────────────────
 const db = new Database(process.env.DB_PATH || 'surveys.db');
@@ -56,14 +66,17 @@ if (!adminExists) {
   console.log('✅ Admin creato: admin@ftv.it / Admin2026!');
 }
 
-// ── MULTER (upload foto) ──────────────────────────────────
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.jpg';
-    cb(null, `ph_${Date.now()}_${Math.random().toString(36).substr(2, 6)}${ext}`);
-  }
-});
+// ── MULTER (memory storage per Cloudinary, disk per fallback) ──
+const storage = useCloudinary
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+      filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname) || '.jpg';
+        cb(null, `ph_${Date.now()}_${Math.random().toString(36).substr(2, 6)}${ext}`);
+      }
+    });
+
 const upload = multer({
   storage,
   limits: { fileSize: 8 * 1024 * 1024 },
@@ -74,9 +87,9 @@ const upload = multer({
 });
 
 // ── MIDDLEWARE ────────────────────────────────────────────
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '4mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(UPLOAD_DIR));
+if (!useCloudinary) app.use('/uploads', express.static(UPLOAD_DIR));
 
 function authMiddleware(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];
@@ -155,15 +168,78 @@ app.put('/api/surveys/:id', authMiddleware, (req, res) => {
   res.json({ success: true });
 });
 
-app.delete('/api/surveys/:id', authMiddleware, (req, res) => {
+app.delete('/api/surveys/:id', authMiddleware, async (req, res) => {
   const surveyId = req.params.id;
   const photos = db.prepare('SELECT filename FROM photos WHERE survey_id = ?').all(surveyId);
   for (const p of photos) {
-    const filepath = path.join(UPLOAD_DIR, p.filename);
-    try { if (fs.existsSync(filepath)) fs.unlinkSync(filepath); } catch(e) {}
+    try {
+      if (useCloudinary) await cloudinary.uploader.destroy(p.filename);
+      else {
+        const filepath = path.join(UPLOAD_DIR, p.filename);
+        if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+      }
+    } catch(e) {}
   }
   db.prepare('DELETE FROM photos WHERE survey_id = ?').run(surveyId);
   db.prepare('DELETE FROM surveys WHERE id = ?').run(surveyId);
+  res.json({ success: true });
+});
+
+// ── PHOTO ROUTES ──────────────────────────────────────────
+app.get('/api/photos/survey/:surveyId', authMiddleware, (req, res) => {
+  const photos = db.prepare(
+    'SELECT * FROM photos WHERE survey_id = ? ORDER BY created_at ASC'
+  ).all(req.params.surveyId);
+  res.json(photos.map(p => ({
+    ...p,
+    url: useCloudinary
+      ? cloudinary.url(p.filename, { secure: true })
+      : `/uploads/${p.filename}`
+  })));
+});
+
+app.post('/api/photos', authMiddleware, upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'File mancante' });
+  const { surveyId, category, nota } = req.body;
+  if (!surveyId) return res.status(400).json({ error: 'surveyId mancante' });
+  const id = 'ph_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+  try {
+    let filename, url;
+    if (useCloudinary) {
+      const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: 'ftv_sopralluogo', resource_type: 'image' },
+          (error, result) => { if (error) reject(error); else resolve(result); }
+        ).end(req.file.buffer);
+      });
+      filename = result.public_id;
+      url = result.secure_url;
+    } else {
+      filename = req.file.filename;
+      url = `/uploads/${filename}`;
+    }
+    db.prepare(
+      'INSERT INTO photos (id, survey_id, category, nota, filename) VALUES (?, ?, ?, ?, ?)'
+    ).run(id, surveyId, category || 'altro', nota || '', filename);
+    res.json({ success: true, id, url });
+  } catch(e) {
+    res.status(500).json({ error: 'Errore upload: ' + e.message });
+  }
+});
+
+app.delete('/api/photos/:id', authMiddleware, async (req, res) => {
+  const photo = db.prepare('SELECT filename FROM photos WHERE id = ?').get(req.params.id);
+  if (photo) {
+    db.prepare('DELETE FROM photos WHERE id = ?').run(req.params.id);
+    try {
+      if (useCloudinary) await cloudinary.uploader.destroy(photo.filename);
+      else {
+        const filepath = path.join(UPLOAD_DIR, photo.filename);
+        if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+      }
+    } catch(e) {}
+  }
   res.json({ success: true });
 });
 
@@ -175,12 +251,16 @@ app.get('/api/admin/backup', authMiddleware, adminOnly, (req, res) => {
     createdAt: r.created_at, updatedAt: r.updated_at
   }));
   const users = db.prepare('SELECT id, name, email, password, role, created_at FROM users ORDER BY created_at ASC').all();
-  res.json({ exportedAt: new Date().toISOString(), surveys, users });
+  const photos = db.prepare('SELECT * FROM photos ORDER BY created_at ASC').all().map(p => ({
+    ...p,
+    url: useCloudinary ? cloudinary.url(p.filename, { secure: true }) : `/uploads/${p.filename}`
+  }));
+  res.json({ exportedAt: new Date().toISOString(), surveys, users, photos });
 });
 
 app.post('/api/admin/restore', authMiddleware, adminOnly, (req, res) => {
-  const { surveys = [], users = [] } = req.body || {};
-  let addedSurveys = 0, skippedSurveys = 0, addedUsers = 0, skippedUsers = 0;
+  const { surveys = [], users = [], photos = [] } = req.body || {};
+  let addedSurveys = 0, skippedSurveys = 0, addedUsers = 0, skippedUsers = 0, addedPhotos = 0;
   const insertSurvey = db.prepare('INSERT OR IGNORE INTO surveys (id, data, status, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
   for (const s of surveys) {
     const { id, status, createdById, createdByName, createdAt, updatedAt, ...data } = s;
@@ -192,47 +272,27 @@ app.post('/api/admin/restore', authMiddleware, adminOnly, (req, res) => {
     const result = insertUser.run(u.id, u.name, u.email, u.password, u.role || 'user', u.created_at || new Date().toISOString());
     result.changes > 0 ? addedUsers++ : skippedUsers++;
   }
-  res.json({ success: true, addedSurveys, skippedSurveys, addedUsers, skippedUsers });
+  const insertPhoto = db.prepare('INSERT OR IGNORE INTO photos (id, survey_id, category, nota, filename, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+  for (const p of photos) {
+    const result = insertPhoto.run(p.id, p.survey_id, p.category || 'altro', p.nota || '', p.filename, p.created_at || new Date().toISOString());
+    if (result.changes > 0) addedPhotos++;
+  }
+  res.json({ success: true, addedSurveys, skippedSurveys, addedUsers, skippedUsers, addedPhotos });
 });
 
-app.delete('/api/admin/surveys', authMiddleware, adminOnly, (req, res) => {
-  // Elimina tutte le foto fisiche
+app.delete('/api/admin/surveys', authMiddleware, adminOnly, async (req, res) => {
   const photos = db.prepare('SELECT filename FROM photos').all();
   for (const p of photos) {
-    const filepath = path.join(UPLOAD_DIR, p.filename);
-    try { if (fs.existsSync(filepath)) fs.unlinkSync(filepath); } catch(e) {}
+    try {
+      if (useCloudinary) await cloudinary.uploader.destroy(p.filename);
+      else {
+        const filepath = path.join(UPLOAD_DIR, p.filename);
+        if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+      }
+    } catch(e) {}
   }
   db.prepare('DELETE FROM photos').run();
   db.prepare('DELETE FROM surveys').run();
-  res.json({ success: true });
-});
-
-// ── PHOTO ROUTES ──────────────────────────────────────────
-app.get('/api/photos/survey/:surveyId', authMiddleware, (req, res) => {
-  const photos = db.prepare(
-    'SELECT * FROM photos WHERE survey_id = ? ORDER BY created_at ASC'
-  ).all(req.params.surveyId);
-  res.json(photos.map(p => ({ ...p, url: `/uploads/${p.filename}` })));
-});
-
-app.post('/api/photos', authMiddleware, upload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'File mancante' });
-  const { surveyId, category, nota } = req.body;
-  if (!surveyId) return res.status(400).json({ error: 'surveyId mancante' });
-  const id = 'ph_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-  db.prepare(
-    'INSERT INTO photos (id, survey_id, category, nota, filename) VALUES (?, ?, ?, ?, ?)'
-  ).run(id, surveyId, category || 'altro', nota || '', req.file.filename);
-  res.json({ success: true, id, url: `/uploads/${req.file.filename}` });
-});
-
-app.delete('/api/photos/:id', authMiddleware, (req, res) => {
-  const photo = db.prepare('SELECT filename FROM photos WHERE id = ?').get(req.params.id);
-  if (photo) {
-    db.prepare('DELETE FROM photos WHERE id = ?').run(req.params.id);
-    const filepath = path.join(UPLOAD_DIR, photo.filename);
-    try { if (fs.existsSync(filepath)) fs.unlinkSync(filepath); } catch(e) {}
-  }
   res.json({ success: true });
 });
 
@@ -277,5 +337,5 @@ app.delete('/api/users/:id', authMiddleware, adminOnly, (req, res) => {
 app.listen(PORT, () => {
   console.log(`\n🌞 Sopralluogo FTV avviato su http://localhost:${PORT}`);
   console.log(`   Admin: admin@ftv.it / Admin2026!`);
-  console.log(`   Upload dir: ${UPLOAD_DIR}\n`);
+  console.log(`   Storage: ${useCloudinary ? 'Cloudinary ☁️' : 'Locale 💾'}\n`);
 });
