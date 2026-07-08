@@ -224,6 +224,7 @@ app.post('/api/photos', authMiddleware, upload.single('file'), async (req, res) 
     ).run(id, surveyId, category || 'altro', nota || '', filename);
     res.json({ success: true, id, url });
   } catch(e) {
+    console.error('Errore upload Cloudinary:', e.message);
     res.status(500).json({ error: 'Errore upload: ' + e.message });
   }
 });
