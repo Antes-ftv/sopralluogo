@@ -89,7 +89,7 @@ const upload = multer({
 // ── MIDDLEWARE ────────────────────────────────────────────
 app.use(express.json({ limit: '4mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
-if (!useCloudinary) app.use('/uploads', express.static(UPLOAD_DIR));
+app.use('/uploads', express.static(UPLOAD_DIR)); // sempre attivo per compatibilità foto vecchie
 
 function authMiddleware(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];
@@ -192,7 +192,7 @@ app.get('/api/photos/survey/:surveyId', authMiddleware, (req, res) => {
   ).all(req.params.surveyId);
   res.json(photos.map(p => ({
     ...p,
-    url: useCloudinary
+    url: p.filename.includes('/')
       ? cloudinary.url(p.filename, { secure: true })
       : `/uploads/${p.filename}`
   })));
@@ -255,7 +255,7 @@ app.get('/api/admin/backup', authMiddleware, adminOnly, (req, res) => {
   const users = db.prepare('SELECT id, name, email, password, role, created_at FROM users ORDER BY created_at ASC').all();
   const photos = db.prepare('SELECT * FROM photos ORDER BY created_at ASC').all().map(p => ({
     ...p,
-    url: useCloudinary ? cloudinary.url(p.filename, { secure: true }) : `/uploads/${p.filename}`
+    url: p.filename.includes('/') ? cloudinary.url(p.filename, { secure: true }) : `/uploads/${p.filename}`
   }));
   res.json({ exportedAt: new Date().toISOString(), surveys, users, photos });
 });
