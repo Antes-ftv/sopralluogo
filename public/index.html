@@ -309,6 +309,9 @@
           </div>
           <div class="form-row">
             <div class="form-group"><label>Data sopralluogo</label><input type="date" id="f-data"></div>
+            <div class="form-group"><label>Ora sopralluogo</label><input type="time" id="f-ora"></div>
+          </div>
+          <div class="form-row">
             <div class="form-group"><label>Località</label><input type="text" id="f-localita" placeholder="Città, Provincia"></div>
           </div>
           <div class="form-row">
@@ -1017,6 +1020,7 @@ function readForm() {
     ditta:document.getElementById('f-ditta').value,
     tecnico:document.getElementById('f-tecnico').value,
     data:document.getElementById('f-data').value,
+    ora:document.getElementById('f-ora').value,
     localita:document.getElementById('f-localita').value,
     cliente:document.getElementById('f-cliente').value,
     telefono:document.getElementById('f-telefono').value,
@@ -1166,7 +1170,7 @@ function checkSPI() {
 function populateForm(s) {
   setType(s.type||'residenziale');
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
-  set('f-ditta',s.ditta); set('f-tecnico',s.tecnico); set('f-data',s.data); set('f-localita',s.localita);
+  set('f-ditta',s.ditta); set('f-tecnico',s.tecnico); set('f-data',s.data); set('f-ora',s.ora); set('f-localita',s.localita);
   set('f-cliente',s.cliente); set('f-telefono',s.telefono); set('f-kw',s.kw);
   set('f-pannelli',s.pannelli); set('f-inverter',s.inverter); set('f-accumulo',s.accumulo);
   set('f-colonnina-mod',s.colonninaModello); set('f-pot-contrattuale',s.potContrattuale);
@@ -1829,7 +1833,7 @@ function renderReport(s, photos=[]) {
     <div style="font-size:22px;font-weight:800;color:#263238;margin-bottom:4px;">RELAZIONE DI SOPRALLUOGO</div>
     <div style="font-size:13px;font-weight:600;color:#546e7a;letter-spacing:.5px;">${subtitle}</div>
   </div>
-  ${tHead('DATI DEL SOPRALLUOGO')}${tWrap(td('Committente',s.ditta)+td('Cliente',s.cliente)+td('Indirizzo',s.localita)+td('Data sopralluogo',dateFmt)+td('Tecnico incaricato',s.tecnico)+td('Contatto',s.telefono?'Tel. '+s.telefono:''))}
+  ${tHead('DATI DEL SOPRALLUOGO')}${tWrap(td('Committente',s.ditta)+td('Cliente',s.cliente)+td('Indirizzo',s.localita)+td('Data sopralluogo',dateFmt+(s.ora?' — ore '+s.ora:''))+td('Tecnico incaricato',s.tecnico)+td('Contatto',s.telefono?'Tel. '+s.telefono:''))}
   ${parseFloat(s.kw)>=12?`<div style="margin-bottom:20px;padding:14px 18px;background:#fff3e0;border-left:5px solid #f57c00;border-radius:6px;"><div style="font-size:14px;font-weight:800;color:#e65100;margin-bottom:4px;">⚠️ ATTENZIONE — SPI ESTERNA OBBLIGATORIA</div><div style="font-size:13px;color:#bf360c;">Potenza impianto ≥ 12 kW (${s.kw} kWp) — È necessario installare un Sistema di Protezione dell'Interfaccia (SPI) esterno secondo normativa <strong>CEI 0-21</strong>.</div></div>`:''}
   ${sH(1,"DATI IMPIANTO PROPOSTO")}${tHead('COMPONENTI IMPIANTO')}${tWrap(td('Tipo di rete',s.fornitura?s.fornitura.charAt(0).toUpperCase()+s.fornitura.slice(1):'')+td('Potenza totale impianto',s.kw?s.kw+' kWp':'')+td('Pannelli fotovoltaici',s.pannelli)+td('Inverter',s.inverter)+td('Sistema di accumulo',s.batteria==='si'?'SI'+(s.accumulo?' - '+s.accumulo:''):s.batteria==='no'?'NO':'')+td('Colonnina ricarica (Wallbox)',s.colonnina==='si'?'SI'+(s.colonninaModello?' - '+s.colonninaModello:''):s.colonnina==='no'?'NO':'')+td('Ottimizzatori di potenza',s.ottimizzatori==='si'?'SI':s.ottimizzatori==='no'?'NO':'')+td('Funzione backup',s.backup==='si'?`<span style="color:#b71c1c;font-weight:800;">✅ SÌ — ${s.backupTipo==='tutta'?'Tutta la casa':s.backupTipo==='parziale'?'Parziale':'da definire'}</span>`:s.backup==='no'?'No':''))}
   ${sH(2,"DESCRIZIONE DELL'EDIFICIO")}${narrative?`<p style="font-size:13px;line-height:1.7;margin-bottom:14px;text-align:justify;">${narrative}</p>`:''}${tHead('CARATTERISTICHE EDIFICIO')}${tWrap(td('Tipo di abitazione',s.abitazione)+td('Numero di piani',s.piani)+td('Altezza grondaia',s.altezza?s.altezza+' mt':'')+td('Tipo di tetto',s.tetto)+td('Tipo di copertura',s.copertura)+td('Solaio',s.struttura)+td('Guaina impermeabilizzante',s.guaina==='si'?'SI':s.guaina==='no'?'NO':'')+td('Stato della copertura',(s.statoCopertura||'').replace(/[^\w\s]/g,'').trim().toUpperCase()))}
