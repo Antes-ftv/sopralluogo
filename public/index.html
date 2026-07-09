@@ -304,20 +304,72 @@
         <div class="section-header">📋 Informazioni generali</div>
         <div class="section-body">
           <div class="form-row">
-            <div class="form-group"><label>Ditta committente</label><input type="text" id="f-ditta" list="committenti-datalist" autocomplete="off" placeholder="Seleziona o digita..."><datalist id="committenti-datalist"></datalist></div>
+            <div class="form-group"><label>Ditta committente</label><input type="text" id="f-ditta" placeholder="Es. Bioenergia Srl"></div>
             <div class="form-group"><label>Nome tecnico</label><input type="text" id="f-tecnico" placeholder="Nome e cognome"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Data appuntamento</label><input type="date" id="f-dataAppuntamento"></div>
-            <div class="form-group"><label>Ora appuntamento</label><input type="time" id="f-oraAppuntamento"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group full"><label>Indirizzo</label><input type="text" id="f-localita" placeholder="Via, Città, Provincia"></div>
+            <div class="form-group"><label>Data sopralluogo</label><input type="date" id="f-data"></div>
+            <div class="form-group"><label>Località</label><input type="text" id="f-localita" placeholder="Città, Provincia"></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Cliente</label><input type="text" id="f-cliente" placeholder="Nome / Ragione sociale"></div>
             <div class="form-group"><label>Telefono cliente</label><input type="text" id="f-telefono" placeholder="+39..."></div>
           </div>
+        </div>
+      </div>
+
+      <!-- SEZIONE TRASFERTA -->
+      <div class="section" id="sezione-trasferta">
+        <div class="section-header orange">🚗 Trasferta (fuori area operativa)</div>
+        <div class="section-body">
+          <p style="font-size:12px;color:#777;margin:0 0 10px;">Calcolo automatico dalla sede ANTES (San Mauro Pascoli) alla località del sopralluogo. Soglia: 100 km.</p>
+          <div class="form-row" style="align-items:flex-end;gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label>Indirizzo cantiere (per calcolo km)</label>
+              <input type="text" id="f-trasferta-indirizzo" placeholder="Es. Via Roma 1, Milano MI" style="font-size:13px;">
+            </div>
+            <button onclick="calcolaTrasferta()" id="btn-calcola-trasferta" style="background:var(--orange);color:white;border:none;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer;white-space:nowrap;height:38px;">📍 Calcola km</button>
+          </div>
+          <div id="trasferta-result" style="display:none;margin-top:14px;">
+            <div id="trasferta-badge" style="padding:10px 14px;border-radius:8px;font-weight:700;font-size:14px;margin-bottom:12px;"></div>
+            <div class="form-row">
+              <div class="form-group half">
+                <label>Km totali</label>
+                <input type="number" id="f-trasferta-km" readonly style="background:#f5f5f5;font-weight:700;">
+              </div>
+              <div class="form-group half">
+                <label>Km eccedenti (oltre 100)</label>
+                <input type="number" id="f-trasferta-km-ecc" readonly style="background:#f5f5f5;font-weight:700;color:var(--orange);">
+              </div>
+              <div class="form-group half">
+                <label>Ore viaggio eccedenti</label>
+                <input type="number" id="f-trasferta-ore" readonly style="background:#f5f5f5;font-weight:700;">
+              </div>
+            </div>
+            <div id="trasferta-costi" style="display:none;">
+              <div style="font-weight:700;font-size:13px;color:#444;margin:10px 0 8px;">Calcolo rimborsi</div>
+              <div class="form-row">
+                <div class="form-group half">
+                  <label>N. tecnici</label>
+                  <input type="number" id="f-trasferta-tecnici" value="2" min="1" max="10" oninput="aggiornaCostiTrasferta()">
+                </div>
+                <div class="form-group half">
+                  <label>N. pasti</label>
+                  <input type="number" id="f-trasferta-pasti" value="0" min="0" oninput="aggiornaCostiTrasferta()">
+                </div>
+                <div class="form-group half">
+                  <label>Pernottamento</label>
+                  <select id="f-trasferta-pernottamento" onchange="aggiornaCostiTrasferta()">
+                    <option value="no">No</option>
+                    <option value="si">Sì</option>
+                  </select>
+                </div>
+              </div>
+              <div id="trasferta-breakdown" style="background:#fff8f5;border:1px solid #ffccbc;border-radius:8px;padding:12px;margin-top:8px;font-size:13px;"></div>
+            </div>
+          </div>
+          <!-- Dati salvati (hidden) -->
+          <input type="hidden" id="f-trasferta-luogo">
         </div>
       </div>
 
@@ -331,10 +383,9 @@
                 <button class="toggle-btn" id="t-fornitura-trifase" onclick="setToggle('fornitura','trifase')">Trifase</button>
               </div>
             </div>
-            <div class="form-group half"><label>Potenza campo FV (kWp)</label><input type="number" id="f-kw" step="0.1" placeholder="Es. 7.8"></div>
-            <div class="form-group half"><label>Potenza inverter (kW)</label><input type="number" id="f-kw-inverter" step="0.1" placeholder="Es. 6.0" oninput="checkSPI()">
+            <div class="form-group"><label>Potenza totale (kW)</label><input type="number" id="f-kw" step="0.1" placeholder="Es. 6.5" oninput="checkSPI()">
               <div id="spi-alert" style="display:none;margin-top:8px;padding:10px 14px;background:#fff3e0;border-left:4px solid #f57c00;border-radius:6px;font-size:13px;color:#e65100;font-weight:600;">
-                ⚠️ Inverter ≥ 12 kW — Necessaria <strong>SPI esterna</strong> secondo normativa CEI 0-21
+                ⚠️ Potenza ≥ 12 kW — Necessaria <strong>SPI esterna</strong> secondo normativa CEI 0-21
               </div>
             </div>
           </div>
@@ -769,14 +820,6 @@
         <button class="btn-save" onclick="addUser()">Aggiungi utente</button>
       </div>
       <div id="users-list"><div class="loader">Caricamento...</div></div>
-      <div class="add-user-form" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;" id="committenti-admin">
-        <div class="add-user-title">🏢 Gestione committenti</div>
-        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-          <input type="text" id="new-committente" placeholder="Nome azienda committente" style="flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
-          <button class="btn-save" onclick="addCommittente()">+ Aggiungi</button>
-        </div>
-        <div id="committenti-list" style="margin-top:10px;"></div>
-      </div>
       <div class="add-user-form" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;">
         <div class="add-user-title">🛠️ Strumenti amministratore</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
@@ -876,7 +919,6 @@ function startApp() {
   document.getElementById('user-badge').textContent = currentUser.name;
   document.getElementById('tab-users').style.display = currentUser.role === 'admin' ? '' : 'none';
   switchTab('dashboard');
-  loadCommittenti();
 }
 
 // Auto-login se token in sessione
@@ -891,7 +933,7 @@ function switchTab(tab) {
   });
   showView(tab+'-view');
   if(tab==='dashboard') loadSurveys();
-  if(tab==='users') { loadUsers(); loadCommittenti(); }
+  if(tab==='users') loadUsers();
 }
 
 function showView(id) {
@@ -965,15 +1007,12 @@ function readForm() {
     type: currentType, status:'bozza',
     ditta:document.getElementById('f-ditta').value,
     tecnico:document.getElementById('f-tecnico').value,
-    dataAppuntamento:document.getElementById('f-dataAppuntamento').value,
-    oraAppuntamento:document.getElementById('f-oraAppuntamento').value,
-    data:new Date().toISOString().split('T')[0],
+    data:document.getElementById('f-data').value,
     localita:document.getElementById('f-localita').value,
     cliente:document.getElementById('f-cliente').value,
     telefono:document.getElementById('f-telefono').value,
     fornitura:getToggle('fornitura'),
     kw:document.getElementById('f-kw').value,
-    kwInverter:document.getElementById('f-kw-inverter').value,
     pannelli:document.getElementById('f-pannelli').value,
     inverter:document.getElementById('f-inverter').value,
     batteria:getToggle('batteria'),
@@ -1026,7 +1065,83 @@ function readForm() {
     layoutImpianto:layoutBase64||null,
     firmaClienteNome:document.getElementById('f-firma-nome').value,
     firmaCliente:signatureData||null,
+    trasfertaIndirizzo:document.getElementById('f-trasferta-indirizzo').value,
+    trasfertaLuogo:document.getElementById('f-trasferta-luogo').value,
+    trasfertaKmTotali:trasfertaDati?.kmTotali||null,
+    trasfertaKmEccedenti:trasfertaDati?.kmEccedenti||null,
+    trasfertaOreEccedenti:trasfertaDati?.oreEccedentiArrotondate||null,
+    trasfertaApplicabile:trasfertaDati?.trasfertaApplicabile||false,
+    trasfertaTecnici:trasfertaDati?._tecnici||null,
+    trasfertaPasti:trasfertaDati?._pasti||null,
+    trasfertaPernottamento:trasfertaDati?._pernottamento||false,
+    trasfertaTotale:trasfertaDati?._totale||null,
   };
+}
+
+// ── TRASFERTA ────────────────────────────────────────────
+let trasfertaDati = null;
+
+async function calcolaTrasferta() {
+  const indirizzo = document.getElementById('f-trasferta-indirizzo').value.trim();
+  if (!indirizzo) { showToast('⚠️ Inserisci l\'indirizzo del cantiere'); return; }
+  const btn = document.getElementById('btn-calcola-trasferta');
+  btn.textContent = '⏳ Calcolo...'; btn.disabled = true;
+  try {
+    const res = await api('POST', '/api/trasferta', { citta: indirizzo });
+    trasfertaDati = res;
+    document.getElementById('f-trasferta-km').value = res.kmTotali;
+    document.getElementById('f-trasferta-km-ecc').value = res.kmEccedenti;
+    document.getElementById('f-trasferta-ore').value = res.oreEccedentiArrotondate;
+    document.getElementById('f-trasferta-luogo').value = res.luogoTrovato || '';
+    const badge = document.getElementById('trasferta-badge');
+    if (res.trasfertaApplicabile) {
+      badge.style.background = '#fff3e0'; badge.style.color = '#e65100'; badge.style.border = '1px solid #ffb74d';
+      badge.textContent = `⚠️ TRASFERTA APPLICABILE — ${res.kmTotali} km totali, ${res.kmEccedenti} km eccedenti`;
+      document.getElementById('trasferta-costi').style.display = '';
+    } else {
+      badge.style.background = '#e8f5e9'; badge.style.color = '#1b5e20'; badge.style.border = '1px solid #81c784';
+      badge.textContent = `✅ Nessuna trasferta — ${res.kmTotali} km (entro i ${res.sogliakm} km)`;
+      document.getElementById('trasferta-costi').style.display = 'none';
+    }
+    document.getElementById('trasferta-result').style.display = '';
+    aggiornaCostiTrasferta();
+  } catch(e) {
+    showToast('❌ ' + (e.message || 'Errore nel calcolo trasferta'));
+  } finally {
+    btn.textContent = '📍 Calcola km'; btn.disabled = false;
+  }
+}
+
+function aggiornaCostiTrasferta() {
+  if (!trasfertaDati || !trasfertaDati.trasfertaApplicabile) return;
+  const tecnici = parseInt(document.getElementById('f-trasferta-tecnici').value) || 1;
+  const pasti = parseInt(document.getElementById('f-trasferta-pasti').value) || 0;
+  const pernottamento = document.getElementById('f-trasferta-pernottamento').value === 'si';
+  const t = trasfertaDati.tariffe;
+  const kmEcc = trasfertaDati.kmEccedenti;
+  const oreEcc = trasfertaDati.oreEccedentiArrotondate;
+
+  const rimborsoKm = kmEcc * 2 * t.rimborsoKmFurgone;         // andata + ritorno
+  const rimborsoViaggio = oreEcc * 2 * t.rimborsoViaggioOra * tecnici;
+  const rimborsoPasti = pasti * t.rimborsoParti * tecnici;
+  const rimborsoPernottamento = pernottamento ? t.rimborsoPernottamento * tecnici : 0;
+  const indennita = t.indennitaTrasferta * tecnici;
+  const totale = rimborsoKm + rimborsoViaggio + rimborsoPasti + rimborsoPernottamento + indennita;
+
+  const fmt = v => '€ ' + v.toFixed(2);
+  document.getElementById('trasferta-breakdown').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <tr><td style="padding:3px 0;">Rimborso km furgone (${kmEcc} km × 2 × €0,80)</td><td style="text-align:right;font-weight:600;">${fmt(rimborsoKm)}</td></tr>
+      <tr><td style="padding:3px 0;">Rimborso viaggio (${oreEcc}h × 2 × €18 × ${tecnici} tec.)</td><td style="text-align:right;font-weight:600;">${fmt(rimborsoViaggio)}</td></tr>
+      ${pasti>0?`<tr><td style="padding:3px 0;">Rimborso pasti (${pasti} × €20 × ${tecnici} tec.)</td><td style="text-align:right;font-weight:600;">${fmt(rimborsoPasti)}</td></tr>`:''}
+      ${pernottamento?`<tr><td style="padding:3px 0;">Rimborso pernottamento (€50 × ${tecnici} tec.)</td><td style="text-align:right;font-weight:600;">${fmt(rimborsoPernottamento)}</td></tr>`:''}
+      <tr><td style="padding:3px 0;">Indennità trasferta (€40 × ${tecnici} tec.)</td><td style="text-align:right;font-weight:600;">${fmt(indennita)}</td></tr>
+      <tr style="border-top:2px solid #e65100;"><td style="padding:6px 0;font-weight:700;font-size:14px;">TOTALE TRASFERTA</td><td style="text-align:right;font-weight:800;font-size:14px;color:#e65100;">${fmt(totale)}</td></tr>
+    </table>`;
+
+  // Aggiorna dati salvati
+  trasfertaDati._tecnici = tecnici; trasfertaDati._pasti = pasti;
+  trasfertaDati._pernottamento = pernottamento; trasfertaDati._totale = totale;
 }
 
 function showBackupTipo(show) {
@@ -1035,15 +1150,15 @@ function showBackupTipo(show) {
 }
 
 function checkSPI() {
-  const kw = parseFloat(document.getElementById('f-kw-inverter').value);
+  const kw = parseFloat(document.getElementById('f-kw').value);
   document.getElementById('spi-alert').style.display = (!isNaN(kw) && kw >= 12) ? 'block' : 'none';
 }
 
 function populateForm(s) {
   setType(s.type||'residenziale');
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
-  set('f-ditta',s.ditta); set('f-tecnico',s.tecnico); set('f-dataAppuntamento',s.dataAppuntamento); set('f-oraAppuntamento',s.oraAppuntamento); set('f-localita',s.localita);
-  set('f-cliente',s.cliente); set('f-telefono',s.telefono); set('f-kw',s.kw); set('f-kw-inverter',s.kwInverter);
+  set('f-ditta',s.ditta); set('f-tecnico',s.tecnico); set('f-data',s.data); set('f-localita',s.localita);
+  set('f-cliente',s.cliente); set('f-telefono',s.telefono); set('f-kw',s.kw);
   set('f-pannelli',s.pannelli); set('f-inverter',s.inverter); set('f-accumulo',s.accumulo);
   set('f-colonnina-mod',s.colonninaModello); set('f-pot-contrattuale',s.potContrattuale);
   set('f-altezza',s.altezza); set('f-note-copertura',s.noteCopertura);
@@ -1093,6 +1208,38 @@ function populateForm(s) {
   setChecks('ac-percorso',s.acPercorso||'');
   setChecks('wifi',s.wifi||'',true);
   setChecks('backup',s.backup||'',true);
+  // Trasferta
+  set('f-trasferta-indirizzo', s.trasfertaIndirizzo);
+  set('f-trasferta-luogo', s.trasfertaLuogo);
+  if (s.trasfertaKmTotali) {
+    trasfertaDati = {
+      kmTotali: s.trasfertaKmTotali,
+      kmEccedenti: s.trasfertaKmEccedenti,
+      oreEccedentiArrotondate: s.trasfertaOreEccedenti,
+      trasfertaApplicabile: s.trasfertaApplicabile,
+      sogliakm: 100,
+      tariffe: { rimborsoViaggioOra:18, rimborsoKmFurgone:0.80, rimborsoParti:20, rimborsoPernottamento:50, indennitaTrasferta:40 },
+      _tecnici: s.trasfertaTecnici, _pasti: s.trasfertaPasti,
+      _pernottamento: s.trasfertaPernottamento, _totale: s.trasfertaTotale
+    };
+    document.getElementById('f-trasferta-km').value = s.trasfertaKmTotali;
+    document.getElementById('f-trasferta-km-ecc').value = s.trasfertaKmEccedenti;
+    document.getElementById('f-trasferta-ore').value = s.trasfertaOreEccedenti;
+    if (s.trasfertaTecnici) document.getElementById('f-trasferta-tecnici').value = s.trasfertaTecnici;
+    if (s.trasfertaPasti) document.getElementById('f-trasferta-pasti').value = s.trasfertaPasti;
+    if (s.trasfertaPernottamento) document.getElementById('f-trasferta-pernottamento').value = 'si';
+    const badge = document.getElementById('trasferta-badge');
+    if (s.trasfertaApplicabile) {
+      badge.style.background='#fff3e0';badge.style.color='#e65100';badge.style.border='1px solid #ffb74d';
+      badge.textContent = `⚠️ TRASFERTA APPLICABILE — ${s.trasfertaKmTotali} km totali, ${s.trasfertaKmEccedenti} km eccedenti`;
+      document.getElementById('trasferta-costi').style.display='';
+    } else {
+      badge.style.background='#e8f5e9';badge.style.color='#1b5e20';badge.style.border='1px solid #81c784';
+      badge.textContent = `✅ Nessuna trasferta — ${s.trasfertaKmTotali} km (entro i 100 km)`;
+    }
+    document.getElementById('trasferta-result').style.display='';
+    aggiornaCostiTrasferta();
+  }
   // Layout
   layoutBase64=s.layoutImpianto||null;
   renderLayoutPreview();
@@ -1183,6 +1330,7 @@ function newSurvey() {
   editId=null; currentPhotos=[];
   resetForm();
   document.getElementById('form-view-title').textContent='Nuovo sopralluogo';
+  document.getElementById('f-data').value=new Date().toISOString().split('T')[0];
   showView('form-view');
   loadFotoSection();
   window.scrollTo(0,0);
@@ -1498,209 +1646,50 @@ function removeLayout() {
   const fi=document.getElementById('layout-file-input'); if(fi) fi.value='';
   renderLayoutPreview();
 }
+
 // ══ FIRMA ══
 function initSignaturePad() {
-  const canvas = document.getElementById('signature-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  function getPos(e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    if (e.touches) {
-      return { x:(e.touches[0].clientX-rect.left)*scaleX, y:(e.touches[0].clientY-rect.top)*scaleY };
-    }
-    return { x:(e.clientX-rect.left)*scaleX, y:(e.clientY-rect.top)*scaleY };
-  }
-  function startDraw(e) {
-    e.preventDefault(); isDrawing=true;
-    const pos=getPos(e); lastX=pos.x; lastY=pos.y;
-  }
-  function draw(e) {
-    if(!isDrawing) return; e.preventDefault();
-    const pos=getPos(e);
-    ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(pos.x,pos.y);
-    ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.stroke();
-    lastX=pos.x; lastY=pos.y;
-    signatureData=canvas.toDataURL();
-    const ss=document.getElementById('sign-status');
-    if(ss){ss.textContent='✅ Firma acquisita';ss.style.color='#2e7d32';}
-  }
-  function endDraw() { isDrawing=false; }
-  canvas.removeEventListener('mousedown',startDraw);
-  canvas.removeEventListener('mousemove',draw);
-  canvas.removeEventListener('mouseup',endDraw);
-  canvas.removeEventListener('touchstart',startDraw);
-  canvas.removeEventListener('touchmove',draw);
-  canvas.removeEventListener('touchend',endDraw);
-  canvas.addEventListener('mousedown',startDraw);
-  canvas.addEventListener('mousemove',draw);
-  canvas.addEventListener('mouseup',endDraw);
-  canvas.addEventListener('touchstart',startDraw,{passive:false});
-  canvas.addEventListener('touchmove',draw,{passive:false});
-  canvas.addEventListener('touchend',endDraw);
-}
-
-function clearSignature() {
   const canvas=document.getElementById('signature-canvas');
-  if(canvas) canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+  if(!canvas||canvas._signInit) return;
+  canvas._signInit=true;
+  const ctx=canvas.getContext('2d');
+  ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.strokeStyle='#1a237e';
+
+  function getPos(e){
+    const rect=canvas.getBoundingClientRect();
+    const sx=canvas.width/rect.width, sy=canvas.height/rect.height;
+    const src=e.touches?e.touches[0]:e;
+    return[(src.clientX-rect.left)*sx,(src.clientY-rect.top)*sy];
+  }
+  canvas.addEventListener('mousedown',e=>{isDrawing=true;[lastX,lastY]=getPos(e);});
+  canvas.addEventListener('mousemove',e=>{
+    if(!isDrawing)return;
+    const[x,y]=getPos(e);
+    ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();
+    [lastX,lastY]=[x,y];
+  });
+  canvas.addEventListener('mouseup',()=>{isDrawing=false;_saveSign();});
+  canvas.addEventListener('mouseleave',()=>{isDrawing=false;});
+  canvas.addEventListener('touchstart',e=>{e.preventDefault();isDrawing=true;[lastX,lastY]=getPos(e);},{passive:false});
+  canvas.addEventListener('touchmove',e=>{
+    e.preventDefault();if(!isDrawing)return;
+    const[x,y]=getPos(e);
+    ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();
+    [lastX,lastY]=[x,y];
+  },{passive:false});
+  canvas.addEventListener('touchend',e=>{e.preventDefault();isDrawing=false;_saveSign();},{passive:false});
+}
+
+function _saveSign(){
+  const canvas=document.getElementById('signature-canvas'); if(!canvas) return;
+  signatureData=canvas.toDataURL('image/png');
+  const st=document.getElementById('sign-status');
+  if(st){st.textContent='✅ Firma acquisita';st.style.color='#2e7d32';}
+}
+
+function clearSignature(){
+  const canvas=document.getElementById('signature-canvas'); if(!canvas) return;
+  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
   signatureData=null;
-  const ss=document.getElementById('sign-status');
-  if(ss){ss.textContent='Firma qui sopra con il dito o il mouse';ss.style.color='';}
-}
-
-// ══ REPORT ══
-function row(label,value,cls=''){if(!value)return'';return`<tr><th>${label}</th><td class="rv ${cls}">${value}</td></tr>`;}
-function yesno(val){if(!val)return'—';if(val==='si')return'<span class="rv yes">✅ Sì</span>';if(val==='no')return'<span class="rv no">❌ No</span>';return val;}
-
-function renderReport(s, photos=[]) {
-  const dateFmt=s.data?new Date(s.data+'T12:00:00').toLocaleDateString('it-IT'):'—';
-  const typeLabel=s.type==='ci'?'Commerciale / Industriale':'Residenziale';
-  document.getElementById('report-doc').innerHTML=`
-  <div class="report-logo-row">
-    <div><div class="report-logo">☀️ Sopralluogo FTV <span>MODULO SOPRALLUOGO PER IMPIANTO FOTOVOLTAICO</span></div></div>
-    <div class="report-title-right"><div>${typeLabel}</div><div style="font-size:11px;color:var(--gray)">VERS. 2026-1</div></div>
-  </div>
-  <div class="report-section-title">📋 Informazioni generali</div>
-  <table class="report-table">
-    ${row('Ditta committente',s.ditta)}${row('Nome tecnico',s.tecnico)}
-    ${s.dataAppuntamento?row('Data appuntamento',s.dataAppuntamento.split('-').reverse().join('/')+(s.oraAppuntamento?' ore '+s.oraAppuntamento:'')):''}
-    ${row('Indirizzo',s.localita)}
-    ${row('Cliente',s.cliente)}${row('Telefono',s.telefono)}
-    ${s.createdByName?row('Inserito da',s.createdByName):''}
-  </table>
-  <div class="report-section-title">⚡ Impianto proposto</div>
-  <table class="report-table">
-    ${row('Tipo fornitura',s.fornitura?s.fornitura.charAt(0).toUpperCase()+s.fornitura.slice(1):'')}
-    ${row('Potenza campo FV',s.kw?s.kw+' kWp':'')}
-    ${row('Potenza inverter',s.kwInverter?s.kwInverter+' kW':'')}
-    ${parseFloat(s.kwInverter)>=12?'<tr><td colspan="2" style="background:#fff3e0;color:#e65100;font-weight:700;padding:8px 12px;border-radius:4px;">⚠️ Potenza inverter ≥ 12 kW — Necessaria SPI esterna (CEI 0-21)</td></tr>':''}
-    ${row('Pannelli',s.pannelli)}${row('Inverter',s.inverter)}
-    ${row('Batteria',yesno(s.batteria))}${s.batteria==='si'?row('Potenza accumulo',s.accumulo):''}
-    ${row('Ottimizzatori',yesno(s.ottimizzatori))}
-    ${row('Colonnina ricarica',yesno(s.colonnina))}${s.colonnina==='si'?row('Modello colonnina',s.colonninaModello):''}
-    ${s.backup?row('Funzione backup',yesno(s.backup)):''}${s.backup==='si'&&s.backupTipo?row('Tipo backup',s.backupTipo==='tutta'?'Tutta la casa':'Parziale'):''}
-    ${s.type==='ci'?row('Potenza contrattuale',s.potContrattuale?s.potContrattuale+' kW':''):''}
-    ${s.type==='ci'?row('Connessione rete',s.connessioneRete):''}
-    ${s.type==='ci'?row('Cabina MT/BT',yesno(s.cabina)):''}
-    ${s.type==='ci'?row('Accordo GSE',s.gse?(s.gse==='ssp'?'Scambio sul posto':'Ritiro dedicato'):''):''}
-  </table>
-  <div class="report-section-title">🏠 Abitazione e copertura</div>
-  <table class="report-table">
-    ${row('Tipo abitazione',s.abitazione)}${row('Numero piani',s.piani)}
-    ${row('Altezza grondaia',s.altezza?s.altezza+' mt':'')}
-    ${row('Tipo tetto',s.tetto)}${row('Tipo copertura',s.copertura)}
-    ${row('Tipo struttura',s.struttura)}${row('Guaina',yesno(s.guaina))}
-    ${row('Stato copertura',s.statoCopertura)}${row('Note copertura',s.noteCopertura)}
-  </table>
-  <div class="report-section-title orange">🦺 Messa in sicurezza</div>
-  <table class="report-table">
-    ${row('Utilizzo cesta',yesno(s.cesta))}${s.cesta==='si'?row('Giorni cesta',s.cestaGiorni):''}
-    ${row('Cesta su',s.cestaSu)}${row('Attrezzatura',s.sicurezza)}${s.sicurezzaAltro?row('Altro',s.sicurezzaAltro):''}
-  </table>
-  <div class="report-section-title blue">🔌 Impianto elettrico</div>
-  <table class="report-table">
-    ${row('Impianto di terra',s.terra)}${row('Sezione terra',s.terraSezione?s.terraSezione+' mm²':'')}
-    ${row('Interruttore generale',s.interruttore)}${row('Modello interruttore',s.interruttoreModello)}
-  </table>
-  <div style="margin-bottom:8px"><strong style="font-size:13px;color:var(--gray)">SCHEMA SEMPLIFICATO IMPIANTO</strong></div>
-  <table class="report-table" style="margin-bottom:16px">
-    <tr><th>ENEL → Q.Gen. Abitaz.<br><small>Distanza / Sez. cavo</small></th><td>${s.paMt||'—'} mt &nbsp;|&nbsp; ${s.paSez||'—'} mm²</td></tr>
-    <tr><th>Q.Gen. → Inverter<br><small>Distanza</small></th><td>${s.pbMt||'—'} mt</td></tr>
-    <tr><th>Inverter → Pannelli FTV<br><small>Distanza</small></th><td>${s.invMt||'—'} mt</td></tr>
-    <tr><th>Contatore M2</th><td>${yesno(s.m2)}${s.m2Sez?' &nbsp;|&nbsp; Sez. '+s.m2Sez+' mm²':''}</td></tr>
-  </table>
-  ${s.noteElettrico?'<table class="report-table" style="margin-bottom:16px">'+row('Note impianto elettrico',s.noteElettrico)+'</table>':''}
-  <div class="report-section-title">🔁 Apparati esistenti</div>
-  <table class="report-table">
-    <tr><th>Pannelli esistenti</th><td>${yesno(s.panEsis)}${s.panEsisNum?' — n° '+s.panEsisNum:''}${s.panEsisMod?' — '+s.panEsisMod:''}</td></tr>
-    <tr><th>Inverter esistente</th><td>${yesno(s.invEsis)}${s.invEsisNum?' — n° '+s.invEsisNum:''}${s.invEsisMod?' — '+s.invEsisMod:''}</td></tr>
-    <tr><th>Batteria esistente</th><td>${yesno(s.battEsis)}${s.battEsisNum?' — n° '+s.battEsisNum:''}${s.battEsisMod?' — '+s.battEsisMod:''}</td></tr>
-  </table>
-  <div class="report-section-title">📍 Posizionamenti e logistica</div>
-  <table class="report-table">
-    ${row('Pos. nuovo inverter',s.posInverter)}${row('Pos. nuova batteria',s.posBatteria)}${row('Pos. colonnina',s.posColonnina)}
-    ${row('Calata stringhe - percorso',s.calataPercorso)}${row('Calata stringhe - foratura',s.calataForatura)}${row('Note calata',s.noteCalata)}
-  </table>
-  ${(s.dcMt||s.dcSez||s.dcPercorso||s.acMt)?'<div class="report-section-title orange">☀️ Linee DC / AC</div><table class="report-table">'+
-    row('Linea DC - Distanza',s.dcMt?s.dcMt+' mt':'')+row('Linea DC - Sezione',s.dcSez?s.dcSez+' mm²':'')+
-    row('Percorso DC',s.dcPercorso)+row('Note DC',s.noteDc)+
-    row('Linea AC - Distanza',s.acMt?s.acMt+' mt':'')+row('Linea AC - Sezione',s.acSez?s.acSez+' mm²':'')+
-    row('Percorso AC',s.acPercorso)+row('Note AC',s.noteAc)+
-    '</table>':''}
-  <div class="report-section-title blue">📶 Connettività</div>
-  <table class="report-table">
-    ${row('Connessione internet',s.wifi)}${row('Note connettività',s.noteWifi)}
-  </table>
-  <div class="report-section-title orange">📝 Lavori e chiusura</div>
-  <table class="report-table">
-    ${row('Lavori a carico cliente',s.lavoriCliente)}
-    ${row('Potenza contatore',s.potContatore?s.potContatore+' kW':'')}
-    ${row('Stima giorni',s.giorniLavori)}
-    ${row('Note riservate (ufficio)',s.noteFinali)}
-  </table>
-  ${s.layoutImpianto?'<div class="report-section-title">📐 Layout impianto</div><div style="margin-bottom:16px;"><img src="'+s.layoutImpianto+'" style="max-width:100%;border-radius:6px;border:1px solid var(--border);"></div>':''}
-  ${photos.length ? (() => {
-    const catsWithPhotos = FOTO_CATEGORIE.filter(c => photos.some(p => p.category === c.id));
-    if (!catsWithPhotos.length) return '';
-    return '<div class="report-section-title">📷 Foto sopralluogo</div>' +
-      catsWithPhotos.map(cat => {
-        const cp = photos.filter(p => p.category === cat.id);
-        return '<div style="margin-bottom:16px;"><div style="font-size:13px;font-weight:600;color:var(--gray);margin-bottom:8px;">'+cat.label+' ('+cp.length+')</div>' +
-          '<div class="report-foto-grid">'+cp.map(p =>
-            '<div style="break-inside:avoid;"><img src="'+p.url+'" style="width:100%;border-radius:6px;border:1px solid #ddd;">' +
-            (p.nota?'<div style="font-size:11px;color:var(--gray);margin-top:3px;text-align:center;">'+p.nota+'</div>':'') +
-            '</div>').join('')+'</div></div>';
-      }).join('');
-  })() : ''}
-  <div class="sign-row">
-    <div class="sign-box"><div class="sign-label">Data: ${dateFmt}</div></div>
-    <div class="sign-box"><div class="sign-label">Firma Tecnico</div><div class="sign-line"></div></div>
-    <div class="sign-box">
-      <div class="sign-label">Firma Cliente${s.firmaClienteNome?' — '+s.firmaClienteNome:''}</div>
-      ${s.firmaCliente?'<img src="'+s.firmaCliente+'" style="max-width:100%;max-height:80px;border:1px solid #ddd;border-radius:4px;">':'<div class="sign-line"></div>'}
-    </div>
-  </div>`;
-}
-
-// ══ COMMITTENTI ══
-async function loadCommittenti() {
-  try {
-    const list = await api('GET', '/api/committenti');
-    const dl = document.getElementById('committenti-datalist');
-    if (dl) dl.innerHTML = list.map(c => `<option value="${c.nome}">`).join('');
-    const container = document.getElementById('committenti-list');
-    if (!container) return;
-    if (!list.length) {
-      container.innerHTML = '<p style="font-size:13px;color:var(--gray);margin-top:6px;">Nessun committente ancora.</p>';
-      return;
-    }
-    container.innerHTML = list.map(c => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
-        <span style="font-size:14px;">${c.nome}</span>
-        <button onclick="deleteCommittente('${c.id}')" style="background:none;border:none;color:#c62828;cursor:pointer;font-size:18px;padding:0 4px;" title="Elimina">🗑</button>
-      </div>`).join('');
-  } catch(e) { console.error('loadCommittenti', e); }
-}
-
-async function addCommittente() {
-  const inp = document.getElementById('new-committente');
-  const nome = inp.value.trim();
-  if (!nome) return;
-  try {
-    await api('POST', '/api/admin/committenti', { nome });
-    inp.value = '';
-    showToast('✅ Committente aggiunto');
-    loadCommittenti();
-  } catch(e) { alert('Errore: ' + (e.message || 'nome già esistente')); }
-}
-
-async function deleteCommittente(id) {
-  if (!confirm('Eliminare questo committente?')) return;
-  await api('DELETE', '/api/admin/committenti/' + id);
-  showToast('🗑️ Committente eliminato');
-  loadCommittenti();
-}
-</script>
-</body>
-</html>
+  const st=document.getElementById('sign-status');
+  if(st){st.textContent='Firma qui sopra con il dito o il mouse'
