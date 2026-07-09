@@ -304,7 +304,7 @@
         <div class="section-header">📋 Informazioni generali</div>
         <div class="section-body">
           <div class="form-row">
-            <div class="form-group"><label>Ditta committente</label><input type="text" id="f-ditta" placeholder="Es. Bioenergia Srl"></div>
+            <div class="form-group"><label>Ditta committente</label><input type="text" id="f-ditta" list="committenti-datalist" autocomplete="off" placeholder="Seleziona o digita..."><datalist id="committenti-datalist"></datalist></div>
             <div class="form-group"><label>Nome tecnico</label><input type="text" id="f-tecnico" placeholder="Nome e cognome"></div>
           </div>
           <div class="form-row">
@@ -769,6 +769,14 @@
         <button class="btn-save" onclick="addUser()">Aggiungi utente</button>
       </div>
       <div id="users-list"><div class="loader">Caricamento...</div></div>
+      <div class="add-user-form" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;" id="committenti-admin">
+        <div class="add-user-title">🏢 Gestione committenti</div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+          <input type="text" id="new-committente" placeholder="Nome azienda committente" style="flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+          <button class="btn-save" onclick="addCommittente()">+ Aggiungi</button>
+        </div>
+        <div id="committenti-list" style="margin-top:10px;"></div>
+      </div>
       <div class="add-user-form" style="margin-top:24px;border-top:2px solid var(--border);padding-top:20px;">
         <div class="add-user-title">🛠️ Strumenti amministratore</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
@@ -868,6 +876,7 @@ function startApp() {
   document.getElementById('user-badge').textContent = currentUser.name;
   document.getElementById('tab-users').style.display = currentUser.role === 'admin' ? '' : 'none';
   switchTab('dashboard');
+  loadCommittenti();
 }
 
 // Auto-login se token in sessione
@@ -882,7 +891,7 @@ function switchTab(tab) {
   });
   showView(tab+'-view');
   if(tab==='dashboard') loadSurveys();
-  if(tab==='users') loadUsers();
+  if(tab==='users') { loadUsers(); loadCommittenti(); }
 }
 
 function showView(id) {
@@ -1652,6 +1661,45 @@ function renderReport(s, photos=[]) {
       ${s.firmaCliente?'<img src="'+s.firmaCliente+'" style="max-width:100%;max-height:80px;border:1px solid #ddd;border-radius:4px;">':'<div class="sign-line"></div>'}
     </div>
   </div>`;
+}
+
+// ══ COMMITTENTI ══
+async function loadCommittenti() {
+  try {
+    const list = await api('GET', '/api/committenti');
+    const dl = document.getElementById('committenti-datalist');
+    if (dl) dl.innerHTML = list.map(c => `<option value="${c.nome}">`).join('');
+    const container = document.getElementById('committenti-list');
+    if (!container) return;
+    if (!list.length) {
+      container.innerHTML = '<p style="font-size:13px;color:var(--gray);margin-top:6px;">Nessun committente ancora.</p>';
+      return;
+    }
+    container.innerHTML = list.map(c => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:14px;">${c.nome}</span>
+        <button onclick="deleteCommittente('${c.id}')" style="background:none;border:none;color:#c62828;cursor:pointer;font-size:18px;padding:0 4px;" title="Elimina">🗑</button>
+      </div>`).join('');
+  } catch(e) { console.error('loadCommittenti', e); }
+}
+
+async function addCommittente() {
+  const inp = document.getElementById('new-committente');
+  const nome = inp.value.trim();
+  if (!nome) return;
+  try {
+    await api('POST', '/api/admin/committenti', { nome });
+    inp.value = '';
+    showToast('✅ Committente aggiunto');
+    loadCommittenti();
+  } catch(e) { alert('Errore: ' + (e.message || 'nome già esistente')); }
+}
+
+async function deleteCommittente(id) {
+  if (!confirm('Eliminare questo committente?')) return;
+  await api('DELETE', '/api/admin/committenti/' + id);
+  showToast('🗑️ Committente eliminato');
+  loadCommittenti();
 }
 </script>
 </body>
