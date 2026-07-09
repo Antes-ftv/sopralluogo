@@ -335,9 +335,27 @@ app.delete('/api/users/:id', authMiddleware, adminOnly, (req, res) => {
   res.json({ success: true });
 });
 
-// ── START ─────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\nSopralluogo FTV avviato su http://localhost:${PORT}`);
-  console.log(`   Admin: admin@ftv.it / Admin2026!`);
-  console.log(`   Storage: ${useCloudinary ? 'Cloudinary' : 'Locale'}\n`);
+// ── COMMITTENTI ROUTES ─────────────────────────────────────────
+app.get('/api/committenti', authMiddleware, (req, res) => {
+  const rows = db.prepare('SELECT id, nome FROM committenti ORDER BY nome ASC').all();
+  res.json(rows);
 });
+
+app.post('/api/admin/committenti', authMiddleware, adminOnly, (req, res) => {
+  const { nome } = req.body;
+  if (!nome || !nome.trim()) return res.status(400).json({ error: 'Nome richiesto' });
+  const id = 'c_' + Date.now();
+  try {
+    db.prepare('INSERT INTO committenti (id, nome) VALUES (?, ?)').run(id, nome.trim());
+    res.json({ success: true, id, nome: nome.trim() });
+  } catch(e) {
+    res.status(400).json({ error: 'Committente già esistente' });
+  }
+});
+
+app.delete('/api/admin/committenti/:id', authMiddleware, adminOnly, (req, res) => {
+  db.prepare('DELETE FROM committenti WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
+// ── START ───────────────────────────────────────────────�
