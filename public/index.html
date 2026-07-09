@@ -331,9 +331,10 @@
                 <button class="toggle-btn" id="t-fornitura-trifase" onclick="setToggle('fornitura','trifase')">Trifase</button>
               </div>
             </div>
-            <div class="form-group"><label>Potenza totale (kW)</label><input type="number" id="f-kw" step="0.1" placeholder="Es. 6.5" oninput="checkSPI()">
+            <div class="form-group half"><label>Potenza campo FV (kWp)</label><input type="number" id="f-kw" step="0.1" placeholder="Es. 7.8"></div>
+            <div class="form-group half"><label>Potenza inverter (kW)</label><input type="number" id="f-kw-inverter" step="0.1" placeholder="Es. 6.0" oninput="checkSPI()">
               <div id="spi-alert" style="display:none;margin-top:8px;padding:10px 14px;background:#fff3e0;border-left:4px solid #f57c00;border-radius:6px;font-size:13px;color:#e65100;font-weight:600;">
-                ⚠️ Potenza ≥ 12 kW — Necessaria <strong>SPI esterna</strong> secondo normativa CEI 0-21
+                ⚠️ Inverter ≥ 12 kW — Necessaria <strong>SPI esterna</strong> secondo normativa CEI 0-21
               </div>
             </div>
           </div>
@@ -963,6 +964,7 @@ function readForm() {
     telefono:document.getElementById('f-telefono').value,
     fornitura:getToggle('fornitura'),
     kw:document.getElementById('f-kw').value,
+    kwInverter:document.getElementById('f-kw-inverter').value,
     pannelli:document.getElementById('f-pannelli').value,
     inverter:document.getElementById('f-inverter').value,
     batteria:getToggle('batteria'),
@@ -1024,7 +1026,7 @@ function showBackupTipo(show) {
 }
 
 function checkSPI() {
-  const kw = parseFloat(document.getElementById('f-kw').value);
+  const kw = parseFloat(document.getElementById('f-kw-inverter').value);
   document.getElementById('spi-alert').style.display = (!isNaN(kw) && kw >= 12) ? 'block' : 'none';
 }
 
@@ -1032,7 +1034,7 @@ function populateForm(s) {
   setType(s.type||'residenziale');
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
   set('f-ditta',s.ditta); set('f-tecnico',s.tecnico); set('f-dataAppuntamento',s.dataAppuntamento); set('f-oraAppuntamento',s.oraAppuntamento); set('f-localita',s.localita);
-  set('f-cliente',s.cliente); set('f-telefono',s.telefono); set('f-kw',s.kw);
+  set('f-cliente',s.cliente); set('f-telefono',s.telefono); set('f-kw',s.kw); set('f-kw-inverter',s.kwInverter);
   set('f-pannelli',s.pannelli); set('f-inverter',s.inverter); set('f-accumulo',s.accumulo);
   set('f-colonnina-mod',s.colonninaModello); set('f-pot-contrattuale',s.potContrattuale);
   set('f-altezza',s.altezza); set('f-note-copertura',s.noteCopertura);
@@ -1561,7 +1563,9 @@ function renderReport(s, photos=[]) {
   <div class="report-section-title">⚡ Impianto proposto</div>
   <table class="report-table">
     ${row('Tipo fornitura',s.fornitura?s.fornitura.charAt(0).toUpperCase()+s.fornitura.slice(1):'')}
-    ${row('Potenza totale',s.kw?s.kw+' kW':'')}
+    ${row('Potenza campo FV',s.kw?s.kw+' kWp':'')}
+    ${row('Potenza inverter',s.kwInverter?s.kwInverter+' kW':'')}
+    ${parseFloat(s.kwInverter)>=12?'<tr><td colspan="2" style="background:#fff3e0;color:#e65100;font-weight:700;padding:8px 12px;border-radius:4px;">⚠️ Potenza inverter ≥ 12 kW — Necessaria SPI esterna (CEI 0-21)</td></tr>':''}
     ${row('Pannelli',s.pannelli)}${row('Inverter',s.inverter)}
     ${row('Batteria',yesno(s.batteria))}${s.batteria==='si'?row('Potenza accumulo',s.accumulo):''}
     ${row('Ottimizzatori',yesno(s.ottimizzatori))}
