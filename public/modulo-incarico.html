@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modulo di Incarico – ANTES</title>
+<style>
+  :root {
+    --verde:   #1b5e20;
+    --verde2:  #2e7d32;
+    --arancio: #bf360c;
+    --grigio:  #444;
+    --grigio2: #777;
+    --border:  #ccc;
+    --bg:      #f5f5f5;
+    --bg-sec:  #fff;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--grigio);
+    padding: 20px 12px 40px;
+  }
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.12);
+    overflow: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px 14px;
+    border-bottom: 3px solid var(--verde);
+    background: white;
+  }
+  .header img { height: 52px; width: auto; }
+  .header-right { text-align: right; }
+  .header-right h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--verde);
+    letter-spacing: .5px;
+  }
+  .header-right p {
+    font-size: 12px;
+    color: var(--grigio2);
+    margin-top: 3px;
+    line-height: 1.5;
+  }
+  .header-right a { color: var(--grigio2); text-decoration: none; }
+
+  /* BODY */
+  form { padding: 0 0 24px; }
+
+  /* SECTION */
+  .sec {
+    background: var(--verde);
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 7px 20px;
+    margin-top: 18px;
+    letter-spacing: .3px;
+  }
+  .sec.arancio { background: var(--arancio); }
+  .sec-body { padding: 14px 20px 4px; }
+
+  /* FIELDS */
+  .row { display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+  .field { display: flex; flex-direction: column; flex: 1; min-width: 140px; }
+  .field.full { flex: 1 0 100%; }
+  .field.w30 { flex: 0 0 calc(30% - 6px); }
+  .field.w20 { flex: 0 0 100px; }
+  label { font-size: 12px; color: var(--grigio2); margin-bottom: 3px; }
+  input[type=text], input[type=email], input[type=tel], textarea, select {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 6px 8px;
+    font-size: 13.5px;
+    color: var(--grigio);
+    background: #fafafa;
+    width: 100%;
+    transition: border-color .15s;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--verde2);
+    background: white;
+  }
+  textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+
+  /* RADIO / CHECKBOX GROUP */
+  .opt-group { display: flex; flex-wrap: wrap; gap: 10px 28px; padding: 8px 0 10px; }
+  .opt-group.col { flex-direction: column; gap: 6px; }
+  .opt { display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 13.5px; }
+  .opt input[type=radio], .opt input[type=checkbox] {
+    width: 17px; height: 17px; accent-color: var(--verde2);
+    flex-shrink: 0; cursor: pointer;
+    border: none; background: none;
+  }
+  .opt-label { font-size: 12.5px; color: var(--grigio2); margin-bottom: 4px; font-weight: 600; }
+
+  /* PRIORITÀ */
+  .prio-group { display: flex; gap: 14px; padding: 6px 0 10px; }
+  .prio { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .prio input { width: 20px; height: 20px; accent-color: var(--arancio); cursor: pointer; }
+  .prio span { font-size: 12px; color: var(--grigio2); }
+
+  /* NOTE INTERNE */
+  .interno { background: #fffde7; border-left: 3px solid #f9a825; padding: 6px 10px; font-size: 11.5px; color: #795548; margin-bottom: 8px; }
+
+  /* SUBMIT */
+  .submit-wrap { padding: 20px 20px 0; }
+  button[type=submit] {
+    background: var(--verde);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 12px 36px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: background .15s;
+  }
+  button[type=submit]:hover { background: var(--verde2); }
+
+  /* PRIVACY */
+  .privacy {
+    font-size: 11px;
+    color: #aaa;
+    padding: 14px 20px 0;
+    line-height: 1.5;
+  }
+
+  /* FOOTER */
+  .footer {
+    background: var(--verde);
+    color: white;
+    text-align: center;
+    font-size: 11px;
+    padding: 8px;
+    margin-top: 24px;
+  }
+
+  /* SUCCESSO */
+  .success-msg {
+    display: none;
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    border-radius: 6px;
+    padding: 24px;
+    text-align: center;
+    margin: 20px;
+    color: var(--verde);
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 500px) {
+    .header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .header-right { text-align: left; }
+    .field.w30, .field.w20 { flex: 1 0 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <img src="data:image/jpeg;base64,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" alt="ANTES Logo">
+    <div class="header-right">
+      <h1>MODULO DI INCARICO</h1>
+      <p>Impianto Fotovoltaico &nbsp;|&nbsp; Rev. 2026-1<br>
+         <a href="mailto:segreteria@ant-es.it">segreteria@ant-es.it</a> &nbsp;|&nbsp; www.ant-es.it</p>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <form action="https://formspree.io/f/mykqqdeg" method="POST">
+
+    <!-- Campo nascosto: oggetto email -->
+    <input type="hidden" name="_subject" value="Nuovo Modulo di Incarico FTV">
+    <!-- Honeypot anti-spam -->
+    <input type="text" name="_gotcha" style="display:none">
+
+    <!-- 1. TIPO INSTALLAZIONE -->
+    <div class="sec">1.&nbsp; TIPO DI INSTALLAZIONE</div>
+    <div class="sec-body">
+      <div class="opt-group">
+        <label class="opt"><input type="radio" name="tipo_installazione" value="Residenziale" required> Residenziale</label>
+        <label class="opt"><input type="radio" name="tipo_installazione" value="Commerciale / Industriale (C&I)"> Commerciale / Industriale (C&amp;I)</label>
+      </div>
+    </div>
+
+    <!-- 2. DATI DEL CLIENTE -->
+    <div class="sec">2.&nbsp; DATI DEL CLIENTE</div>
+    <div class="sec-body">
+      <div class="row">
+        <div class="field full">
+          <label>Nome e Cognome / Ragione Sociale *</label>
+          <input type="text" name="nome" required placeholder="Es. Mario Rossi / Azienda Srl">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field full">
+          <label>Indirizzo di installazione (Via, N°) *</label>
+          <input type="text" name="indirizzo" required placeholder="Es. Via Roma 12">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Città *</label>
+          <input type="text" name="citta" required>
+        </div>
+        <div class="field w20">
+          <label>Prov.</label>
+          <input type="text" name="provincia" maxlength="2" placeholder="RN">
+        </div>
+        <div class="field w20">
+          <label>CAP</label>
+          <input type="text" name="cap" maxlength="5" placeholder="47900">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Telefono *</label>
+          <input type="tel" name="telefono" required placeholder="Es. 333 1234567">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="esempio@email.it">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field full">
+          <label>Codice Fiscale / P.IVA</label>
+          <input type="text" name="cf_piva">
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. TIPO EDIFICIO -->
+    <div class="sec">3.&nbsp; TIPO DI EDIFICIO</div>
+    <div class="sec-body">
+      <div class="opt-group">
+        <label class="opt"><input type="radio" name="tipo_edificio" value="Singola" required> Singola</label>
+        <label class="opt"><input type="radio" name="tipo_edificio" value="Bifamiliare"> Bifamiliare</label>
+        <label class="opt"><input type="radio" name="tipo_edificio" value="Condominio"> Condominio</label>
+        <label class="opt"><input type="radio" name="tipo_edificio" value="Capannone / Industriale"> Capannone / Industriale</label>
+      </div>
+    </div>
+
+    <!-- 4. DETTAGLI IMPIANTO -->
+    <div class="sec">4.&nbsp; DETTAGLI IMPIANTO FOTOVOLTAICO</div>
+    <div class="sec-body">
+      <div class="row">
+        <div class="field">
+          <label>Potenza impianto (kWp)</label>
+          <input type="text" name="potenza_kwp" placeholder="Es. 6.0">
+        </div>
+        <div class="field">
+          <label>N. moduli FV</label>
+          <input type="text" name="n_moduli" placeholder="Es. 12">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field full">
+          <label>Modello modulo FV (con potenza unitaria)</label>
+          <input type="text" name="modello_modulo" placeholder="Es. Longi 500Wp">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field full">
+          <label>N. e Modello Inverter</label>
+          <input type="text" name="inverter" placeholder="Es. 1x Fronius Symo 6.0">
+        </div>
+      </div>
+
+      <div class="opt-label">Accumulo (batteria)</div>
+      <div class="opt-group">
+        <label class="opt"><input type="radio" name="accumulo" value="Sì"> Sì</label>
+        <label class="opt"><input type="radio" name="accumulo" value="No"> No</label>
+        <label class="opt"><input type="radio" name="accumulo" value="Da valutare" checked> Da valutare</label>
+      </div>
+
+      <div class="opt-label">Colonnina ricarica EV</div>
+      <div class="opt-group">
+        <label class="opt"><input type="radio" name="colonnina_ev" value="Sì"> Sì</label>
+        <label class="opt"><input type="radio" name="colonnina_ev" value="No"> No</label>
+        <label class="opt"><input type="radio" name="colonnina_ev" value="Da valutare" checked> Da valutare</label>
+      </div>
+
+      <div class="opt-label">Antiblackout</div>
+      <div class="opt-group">
+        <label class="opt"><input type="radio" name="antiblackout" value="Sì"> Sì</label>
+        <label class="opt"><input type="radio" name="antiblackout" value="No"> No</label>
+        <label class="opt"><input type="radio" name="antiblackout" value="Da valutare" checked> Da valutare</label>
+      </div>
+
+      <div class="opt-label" style="margin-top:4px;font-style:italic;font-weight:400;">(se Sì) Tipo backup</div>
+      <div class="opt-group">
+        <label class="opt"><input type="radio" name="backup_tipo" value="Parziale"> Parziale (utenze selezionate)</label>
+        <label class="opt"><input type="radio" name="backup_tipo" value="Totale"> Totale (tutta l'abitazione)</label>
+      </div>
+    </div>
+
+    <!-- 5. PRIORITÀ -->
+    <div class="sec arancio">5.&nbsp; PRIORITÀ DELL'INTERVENTO</div>
+    <div class="sec-body">
+      <div style="font-size:12px;color:#999;margin-bottom:6px;">1 = Bassa &nbsp; 2 = Medio-bassa &nbsp; 3 = Media &nbsp; 4 = Medio-alta &nbsp; 5 = Urgente</div>
+      <div class="prio-group">
+        <label class="prio"><input type="radio" name="priorita" value="1"><span>1</span></label>
+        <label class="prio"><input type="radio" name="priorita" value="2"><span>2</span></label>
+        <label class="prio"><input type="radio" name="priorita" value="3" checked><span>3</span></label>
+        <label class="prio"><input type="radio" name="priorita" value="4"><span>4</span></label>
+        <label class="prio"><input type="radio" name="priorita" value="5"><span>5</span></label>
+      </div>
+      <div class="row" style="margin-top:4px;">
+        <div class="field full">
+          <label>Motivazione urgenza (se priorità 4-5)</label>
+          <input type="text" name="motivazione_urgenza">
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. NOTE CLIENTE -->
+    <div class="sec">6.&nbsp; NOTE E RICHIESTE DEL CLIENTE</div>
+    <div class="sec-body">
+      <div class="row">
+        <div class="field full">
+          <textarea name="note_cliente" placeholder="Inserisci qui eventuali note, richieste specifiche o informazioni aggiuntive..." rows="5"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. ANNOTAZIONI USO INTERNO -->
+    <div class="sec arancio">7.&nbsp; ANNOTAZIONI (uso interno)</div>
+    <div class="sec-body">
+<div class="row">
+        <div class="field full">
+          <textarea name="annotazioni_interne" placeholder="Note tecniche, osservazioni interne, indicazioni per il sopralluogo..." rows="5"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="submit-wrap">
+      <button type="submit">📩 Invia Modulo</button>
+    </div>
+
+    <div class="privacy">
+      Privacy (art. 13 GDPR 2016/679): i dati raccolti saranno trattati da ANTES S.r.l. esclusivamente 
+      per la gestione della richiesta. Non saranno comunicati a terzi senza consenso. 
+      Titolare del trattamento: ANTES S.r.l.
+    </div>
+
+  </form>
+
+  <div class="footer">ANTES S.r.l. &nbsp;|&nbsp; segreteria@ant-es.it &nbsp;|&nbsp; www.ant-es.it</div>
+</div>
+</body>
+</html>
