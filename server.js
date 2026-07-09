@@ -359,4 +359,73 @@ app.delete('/api/admin/committenti/:id', authMiddleware, adminOnly, (req, res) =
 });
 
 // ── TRASFERTA ─────────────────────────────────────────────
-// S
+// Sede operativa ANTES: Via Circonvallazione Ovest 4, San Mauro Pascoli (FC)
+const SEDE_COORDS = { lat: 44.1027, lon: 12.4158 }; // San Mauro Pascoli
+const SOGLIA_KM = 100;
+
+app.post('/api/trasferta', authMiddleware, async (req, res) => {
+  const { indirizzo, citta, provincia, cap } = req.body || {};
+  if (!citta) return res.status(400).json({ error: 'Indirizzo cantiere mancante' });
+
+  const indirizzoCompleto = [indirizzo, citta, provincia, cap, 'Italy'].filter(Boolean).join(', ');
+
+  try {
+    // 1. Geocodifica indirizzo cantiere con Nominatim (OpenStreetMap, gratuito)
+    const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(indirizzoCompleto)}&format=json&limit=1`;
+    const geoResp = await fetch(geoUrl, {
+      headers: { 'User-Agent': 'ANTES-Sopralluogo-App/1.0 (info@ant-es.it)' }
+    });
+    const geoData = await geoResp.json();
+    if (!geoData || geoData.length === 0) {
+      return res.status(404).json({ error: 'Indirizzo cantiere non trovato. Verifica via, città e CAP.' });
+    }
+    const destLat = parseFloat(geoData[0].lat);
+    const destLon = parseFloat(geoData[0].lon);
+    const luogoTrovato = geoData[0].display_name;
+
+    // 2. Calcolo distanza/durata con OSRM (gratuito, nessuna API key)
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${SEDE_COORDS.lon},${SEDE_COORDS.lat};${destLon},${destLat}?overview=false`;
+    const osrmResp = await fetch(osrmUrl);
+    const osrmData = await osrmResp.json();
+    if (!osrmData.routes || osrmData.routes.length === 0) {
+      return res.status(500).json({ error: 'Impossibile calcolare il percorso stradale' });
+    }
+
+    const kmTotali = Math.round(osrmData.routes[0].distance / 1000);
+    const secondiTotali = osrmData.routes[0].duration;
+    const oreTotali = secondiTotali / 3600;
+
+    // 3. Calcolo eccedenza e trasferta
+    const trasfertaApplicabile = kmTotali > SOGLIA_KM;
+    let kmEccedenti = 0, oreEccedentiArrotondate = 0;
+
+    if (trasfertaApplicabile) {
+      kmEccedenti = kmTotali - SOGLIA_KM;
+      const oreEccedentiRaw = oreTotali * (kmEccedenti / kmTotali);
+      oreEccedentiArrotondate = Math.max(1, Math.ceil(oreEccedentiRaw));
+    }
+
+    res.json({
+      luogoTrovato,
+      kmTotali,
+      oreTotali: Math.round(oreTotali * 10) / 10,
+      trasfertaApplicabile,
+      sogliakm: SOGLIA_KM,
+      kmEccedenti,
+      oreEccedentiArrotondate,
+      tariffe: {
+        rimborsoViaggioOra: 18.00,
+        rimborsoKmFurgone: 0.80,
+        rimborsoParti: 20.00,
+        rimborsoPernottamento: 50.00,
+        indennitaTrasferta: 40.00
+      }
+    });
+  } catch (e) {
+    console.error('TRASFERTA-ERROR:', e.message);
+    res.status(500).json({ error: 'Errore nel calcolo trasferta: ' + e.message });
+  }
+});
+
+// ── START ────────────────────────────────────────────────
+app.listen(PORT, () => console.log(`Server avviato su porta ${PORT}`));
