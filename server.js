@@ -358,4 +358,5 @@ app.delete('/api/admin/committenti/:id', authMiddleware, adminOnly, (req, res) =
   res.json({ success: true });
 });
 
-// ── START ───────────────────────────────────────────────�
+// ── START ───────────────────────────────────────────────
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
