@@ -193,8 +193,35 @@
     <!-- Honeypot anti-spam -->
     <input type="text" name="_gotcha" style="display:none">
 
-    <!-- 1. TIPO INSTALLAZIONE -->
-    <div class="sec">1.&nbsp; TIPO DI INSTALLAZIONE</div>
+    <!-- 1. DATI DITTA INCARICANTE -->
+    <div class="sec">1.&nbsp; DATI DELLA DITTA INCARICANTE</div>
+    <div class="sec-body">
+      <div class="row">
+        <div class="field full">
+          <label>Ragione Sociale / Nome *</label>
+          <input type="text" name="ditta_nome" required placeholder="Es. Rossi Impianti S.r.l.">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field full">
+          <label>Referente (chi compila) *</label>
+          <input type="text" name="ditta_referente" required placeholder="Es. Mario Rossi">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Telefono *</label>
+          <input type="tel" name="ditta_telefono" required placeholder="Es. 333 1234567">
+        </div>
+        <div class="field">
+          <label>Email *</label>
+          <input type="email" name="ditta_email" required placeholder="Es. info@ditta.it">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. TIPO INSTALLAZIONE -->
+    <div class="sec">2.&nbsp; TIPO DI INSTALLAZIONE</div>
     <div class="sec-body">
       <div class="opt-group">
         <label class="opt"><input type="radio" name="tipo_installazione" value="Residenziale" required> Residenziale</label>
@@ -202,8 +229,8 @@
       </div>
     </div>
 
-    <!-- 2. DATI DEL CLIENTE -->
-    <div class="sec">2.&nbsp; DATI DEL CLIENTE</div>
+    <!-- 3. DATI DEL CLIENTE -->
+    <div class="sec">3.&nbsp; DATI DEL CLIENTE</div>
     <div class="sec-body">
       <div class="row">
         <div class="field full">
@@ -249,8 +276,8 @@
       </div>
     </div>
 
-    <!-- 3. TIPO EDIFICIO -->
-    <div class="sec">3.&nbsp; TIPO DI EDIFICIO</div>
+    <!-- 4. TIPO EDIFICIO -->
+    <div class="sec">4.&nbsp; TIPO DI EDIFICIO</div>
     <div class="sec-body">
       <div class="opt-group">
         <label class="opt"><input type="radio" name="tipo_edificio" value="Singola" required> Singola</label>
@@ -260,8 +287,8 @@
       </div>
     </div>
 
-    <!-- 4. DETTAGLI IMPIANTO -->
-    <div class="sec">4.&nbsp; DETTAGLI IMPIANTO FOTOVOLTAICO</div>
+    <!-- 5. DETTAGLI IMPIANTO -->
+    <div class="sec">5.&nbsp; DETTAGLI IMPIANTO FOTOVOLTAICO</div>
     <div class="sec-body">
       <div class="row">
         <div class="field">
@@ -314,8 +341,8 @@
       </div>
     </div>
 
-    <!-- 5. PRIORITÀ -->
-    <div class="sec arancio">5.&nbsp; PRIORITÀ DELL'INTERVENTO</div>
+    <!-- 6. PRIORITÀ -->
+    <div class="sec arancio">6.&nbsp; PRIORITÀ DELL'INTERVENTO</div>
     <div class="sec-body">
       <div style="font-size:12px;color:#999;margin-bottom:6px;">1 = Bassa &nbsp; 2 = Medio-bassa &nbsp; 3 = Media &nbsp; 4 = Medio-alta &nbsp; 5 = Urgente</div>
       <div class="prio-group">
@@ -333,8 +360,8 @@
       </div>
     </div>
 
-    <!-- 6. NOTE CLIENTE -->
-    <div class="sec">6.&nbsp; NOTE E RICHIESTE DEL CLIENTE</div>
+    <!-- 7. NOTE CLIENTE -->
+    <div class="sec">7.&nbsp; NOTE E RICHIESTE DEL CLIENTE</div>
     <div class="sec-body">
       <div class="row">
         <div class="field full">
@@ -343,8 +370,8 @@
       </div>
     </div>
 
-    <!-- 7. ANNOTAZIONI USO INTERNO -->
-    <div class="sec arancio">7.&nbsp; ANNOTAZIONI (uso interno)</div>
+    <!-- 8. ANNOTAZIONI USO INTERNO -->
+    <div class="sec arancio">8.&nbsp; ANNOTAZIONI (uso interno)</div>
     <div class="sec-body">
 <div class="row">
         <div class="field full">
