@@ -55,6 +55,11 @@ db.exec(`
     filename TEXT NOT NULL,
     created_at TEXT DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS committenti (
+    id TEXT PRIMARY KEY,
+    nome TEXT UNIQUE NOT NULL
+  );
 `);
 
 // Crea admin di default se non esiste
