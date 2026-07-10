@@ -361,11 +361,8 @@
                   <input type="number" id="f-trasferta-pasti" value="0" min="0" oninput="aggiornaCostiTrasferta()">
                 </div>
                 <div class="form-group half">
-                  <label>Pernottamento</label>
-                  <select id="f-trasferta-pernottamento" onchange="aggiornaCostiTrasferta()">
-                    <option value="no">No</option>
-                    <option value="si">Sì</option>
-                  </select>
+                  <label>Pernottamenti (notti)</label>
+                  <input type="number" id="f-trasferta-pernottamento" value="0" min="0" max="30" oninput="aggiornaCostiTrasferta()">
                 </div>
               </div>
               <div id="trasferta-breakdown" style="background:#fff8f5;border:1px solid #ffccbc;border-radius:8px;padding:12px;margin-top:8px;font-size:13px;"></div>
@@ -819,7 +816,10 @@
       <div class="form-nav no-print">
         <button class="btn-back" onclick="goBackToDash()">← Indietro</button>
         <div class="form-title">Report sopralluogo</div>
-        <button class="btn-save" style="margin-left:auto" onclick="window.print()">🖨️ Stampa / PDF</button>
+        <div style="display:flex;gap:8px;margin-left:auto;">
+          <button class="btn-save" style="background:#1565c0;" onclick="printSenzaTrasferta()">👷 Stampa operai</button>
+          <button class="btn-save" onclick="window.print()">🖨️ Stampa cliente</button>
+        </div>
       </div>
       <div class="report-doc" id="report-doc"></div>
     </div>
@@ -1134,7 +1134,7 @@ function readForm() {
     trasfertaApplicabile:trasfertaDati?.trasfertaApplicabile||false,
     trasfertaTecnici:trasfertaDati?._tecnici||null,
     trasfertaPasti:trasfertaDati?._pasti||null,
-    trasfertaPernottamento:trasfertaDati?._pernottamento||false,
+    trasfertaPernottamento:trasfertaDati?._pernottamento||0,
     trasfertaTotale:trasfertaDati?._totale||null,
   };
 }
@@ -1177,15 +1177,15 @@ function aggiornaCostiTrasferta() {
   if (!trasfertaDati || !trasfertaDati.trasfertaApplicabile) return;
   const tecnici = parseInt(document.getElementById('f-trasferta-tecnici').value) || 1;
   const pasti = parseInt(document.getElementById('f-trasferta-pasti').value) || 0;
-  const pernottamento = document.getElementById('f-trasferta-pernottamento').value === 'si';
+  const notti = parseInt(document.getElementById('f-trasferta-pernottamento').value) || 0;
   const t = trasfertaDati.tariffe;
   const kmEcc = trasfertaDati.kmEccedenti;
   const oreEcc = trasfertaDati.oreEccedentiArrotondate;
 
-  const rimborsoKm = kmEcc * 2 * t.rimborsoKmFurgone;         // andata + ritorno
+  const rimborsoKm = kmEcc * 2 * t.rimborsoKmFurgone;
   const rimborsoViaggio = oreEcc * 2 * t.rimborsoViaggioOra * tecnici;
   const rimborsoPasti = pasti * t.rimborsoParti * tecnici;
-  const rimborsoPernottamento = pernottamento ? t.rimborsoPernottamento * tecnici : 0;
+  const rimborsoPernottamento = notti * t.rimborsoPernottamento * tecnici;
   const indennita = t.indennitaTrasferta * tecnici;
   const totale = rimborsoKm + rimborsoViaggio + rimborsoPasti + rimborsoPernottamento + indennita;
 
@@ -1195,14 +1195,14 @@ function aggiornaCostiTrasferta() {
       <tr><td style="padding:3px 0;">Rimborso km furgone (${kmEcc} km × 2 × €0,80)</td><td style="text-align:right;font-weight:600;">${fmt(rimborsoKm)}</td></tr>
       <tr><td style="padding:3px 0;">Rimborso viaggio (${oreEcc}h × 2 × €18 × ${tecnici} tec.)</td><td style="text-align:right;font-weight:600;">${fmt(rimborsoViaggio)}</td></tr>
       ${pasti>0?`<tr><td style="padding:3px 0;">Rimborso pasti (${pasti} × €20 × ${tecnici} tec.)</td><td style="text-align:right;font-weight:600;">${fmt(rimborsoPasti)}</td></tr>`:''}
-      ${pernottamento?`<tr><td style="padding:3px 0;">Rimborso pernottamento (€50 × ${tecnici} tec.)</td><td style="text-align:right;font-weight:600;">${fmt(rimborsoPernottamento)}</td></tr>`:''}
+      ${notti>0?`<tr><td style="padding:3px 0;">Pernottamento (${notti} notte/i × €50 × ${tecnici} tec.)</td><td style="text-align:right;font-weight:600;">${fmt(rimborsoPernottamento)}</td></tr>`:''}
       <tr><td style="padding:3px 0;">Indennità trasferta (€40 × ${tecnici} tec.)</td><td style="text-align:right;font-weight:600;">${fmt(indennita)}</td></tr>
       <tr style="border-top:2px solid #e65100;"><td style="padding:6px 0;font-weight:700;font-size:14px;">TOTALE TRASFERTA</td><td style="text-align:right;font-weight:800;font-size:14px;color:#e65100;">${fmt(totale)}</td></tr>
     </table>`;
 
   // Aggiorna dati salvati
   trasfertaDati._tecnici = tecnici; trasfertaDati._pasti = pasti;
-  trasfertaDati._pernottamento = pernottamento; trasfertaDati._totale = totale;
+  trasfertaDati._pernottamento = notti; trasfertaDati._totale = totale;
 }
 
 function showBackupTipo(show) {
@@ -1281,14 +1281,14 @@ function populateForm(s) {
       sogliakm: 100,
       tariffe: { rimborsoViaggioOra:18, rimborsoKmFurgone:0.80, rimborsoParti:20, rimborsoPernottamento:50, indennitaTrasferta:40 },
       _tecnici: s.trasfertaTecnici, _pasti: s.trasfertaPasti,
-      _pernottamento: s.trasfertaPernottamento, _totale: s.trasfertaTotale
+      _pernottamento: parseInt(s.trasfertaPernottamento)||0, _totale: s.trasfertaTotale
     };
     document.getElementById('f-trasferta-km').value = s.trasfertaKmTotali;
     document.getElementById('f-trasferta-km-ecc').value = s.trasfertaKmEccedenti;
     document.getElementById('f-trasferta-ore').value = s.trasfertaOreEccedenti;
     if (s.trasfertaTecnici) document.getElementById('f-trasferta-tecnici').value = s.trasfertaTecnici;
     if (s.trasfertaPasti) document.getElementById('f-trasferta-pasti').value = s.trasfertaPasti;
-    if (s.trasfertaPernottamento) document.getElementById('f-trasferta-pernottamento').value = 'si';
+    if (s.trasfertaPernottamento) document.getElementById('f-trasferta-pernottamento').value = parseInt(s.trasfertaPernottamento)||0;
     const badge = document.getElementById('trasferta-badge');
     if (s.trasfertaApplicabile) {
       badge.style.background='#fff3e0';badge.style.color='#e65100';badge.style.border='1px solid #ffb74d';
@@ -1801,6 +1801,13 @@ function clearSignature(){
 function row(label,value,cls=''){if(!value)return'';return`<tr><th>${label}</th><td class="rv ${cls}">${value}</td></tr>`;}
 function yesno(val){if(!val)return'—';if(val==='si')return'<span class="rv yes">✅ Sì</span>';if(val==='no')return'<span class="rv no">❌ No</span>';return val;}
 
+function printSenzaTrasferta() {
+  const el = document.getElementById('report-trasferta');
+  if(el) el.style.display = 'none';
+  window.print();
+  setTimeout(() => { if(el) el.style.display = ''; }, 500);
+}
+
 function renderReport(s, photos=[]) {
   const dateFmt=s.data?new Date(s.data+'T12:00:00').toLocaleDateString('it-IT'):'—';
   let subtitle = 'IMPIANTO FOTOVOLTAICO';
@@ -1860,18 +1867,18 @@ function renderReport(s, photos=[]) {
     if(tApp && s.trasfertaTotale){
       const tec=parseInt(s.trasfertaTecnici)||2;
       const pasti=parseInt(s.trasfertaPasti)||0;
-      const pern=s.trasfertaPernottamento;
+      const notti=parseInt(s.trasfertaPernottamento)||0;
       const kmE=parseFloat(s.trasfertaKmEccedenti)||0;
       const oreE=parseFloat(s.trasfertaOreEccedenti)||0;
       const rKm=(kmE*2*0.80).toFixed(2);
       const rViag=(oreE*2*18*tec).toFixed(2);
       const rPart=(tec*20).toFixed(2);
       const rPasti=(pasti*20).toFixed(2);
-      const rPern=pern==='si'?(tec*50).toFixed(2):'0.00';
+      const rPern=(notti*tec*50).toFixed(2);
       const rInd=(tec*40).toFixed(2);
-      costoHtml=`<div style="margin-top:12px;"><div style="font-size:11px;font-weight:700;color:#546e7a;margin-bottom:6px;text-transform:uppercase;">Dettaglio costi trasferta</div><table style="width:100%;border-collapse:collapse;font-size:12px;"><tr style="background:#f5f5f5;"><td style="padding:5px 8px;">Rimborso km (${kmE} km × 2 × €0,80)</td><td style="padding:5px 8px;text-align:right;font-weight:600;">€ ${rKm}</td></tr><tr><td style="padding:5px 8px;">Rimborso viaggio (${oreE} h × 2 × €18 × ${tec} tec.)</td><td style="padding:5px 8px;text-align:right;font-weight:600;">€ ${rViag}</td></tr><tr style="background:#f5f5f5;"><td style="padding:5px 8px;">Rimborso partenze (${tec} tec. × €20)</td><td style="padding:5px 8px;text-align:right;font-weight:600;">€ ${rPart}</td></tr>${pasti>0?`<tr><td style="padding:5px 8px;">Rimborso pasti (${pasti} × €20)</td><td style="padding:5px 8px;text-align:right;font-weight:600;">€ ${rPasti}</td></tr>`:''}${pern==='si'?`<tr style="background:#f5f5f5;"><td style="padding:5px 8px;">Pernottamento (${tec} tec. × €50)</td><td style="padding:5px 8px;text-align:right;font-weight:600;">€ ${rPern}</td></tr>`:''}<tr><td style="padding:5px 8px;">Indennità trasferta (${tec} tec. × €40)</td><td style="padding:5px 8px;text-align:right;font-weight:600;">€ ${rInd}</td></tr><tr style="background:#bf360c;color:white;"><td style="padding:6px 8px;font-weight:700;">TOTALE TRASFERTA</td><td style="padding:6px 8px;text-align:right;font-weight:800;font-size:13px;">€ ${parseFloat(s.trasfertaTotale).toFixed(2)}</td></tr></table></div>`;
+      costoHtml=`<div style="margin-top:12px;"><div style="font-size:11px;font-weight:700;color:#546e7a;margin-bottom:6px;text-transform:uppercase;">Dettaglio costi trasferta</div><table style="width:100%;border-collapse:collapse;font-size:12px;"><tr style="background:#f5f5f5;"><td style="padding:5px 8px;">Rimborso km (${kmE} km × 2 × €0,80)</td><td style="padding:5px 8px;text-align:right;font-weight:600;">€ ${rKm}</td></tr><tr><td style="padding:5px 8px;">Rimborso viaggio (${oreE} h × 2 × €18 × ${tec} tec.)</td><td style="padding:5px 8px;text-align:right;font-weight:600;">€ ${rViag}</td></tr><tr style="background:#f5f5f5;"><td style="padding:5px 8px;">Rimborso partenze (${tec} tec. × €20)</td><td style="padding:5px 8px;text-align:right;font-weight:600;">€ ${rPart}</td></tr>${pasti>0?`<tr><td style="padding:5px 8px;">Rimborso pasti (${pasti} × €20)</td><td style="padding:5px 8px;text-align:right;font-weight:600;">€ ${rPasti}</td></tr>`:''}${notti>0?`<tr style="background:#f5f5f5;"><td style="padding:5px 8px;">Pernottamento (${notti} notte/i × ${tec} tec. × €50)</td><td style="padding:5px 8px;text-align:right;font-weight:600;">€ ${rPern}</td></tr>`:''}<tr><td style="padding:5px 8px;">Indennità trasferta (${tec} tec. × €40)</td><td style="padding:5px 8px;text-align:right;font-weight:600;">€ ${rInd}</td></tr><tr style="background:#bf360c;color:white;"><td style="padding:6px 8px;font-weight:700;">TOTALE TRASFERTA</td><td style="padding:6px 8px;text-align:right;font-weight:800;font-size:13px;">€ ${parseFloat(s.trasfertaTotale).toFixed(2)}</td></tr></table></div>`;
     }
-    trasfertaHtml=`${sH(sn+4,'TRASFERTA')}${tHead('DATI PERCORSO')}${tWrap(td('Indirizzo cantiere',s.trasfertaIndirizzo||'')+td('Km totali (A/R)',s.trasfertaKmTotali?s.trasfertaKmTotali+' km':'')+td('Km eccedenti soglia 100 km',s.trasfertaKmEccedenti?s.trasfertaKmEccedenti+' km':'')+td('Ore viaggio eccedenti',s.trasfertaOreEccedenti?s.trasfertaOreEccedenti+' h':'')+td('Trasferta',badge))}${costoHtml}`;
+    trasfertaHtml=`<div id="report-trasferta">${sH(sn+4,'TRASFERTA')}${tHead('DATI PERCORSO')}${tWrap(td('Indirizzo cantiere',s.trasfertaIndirizzo||'')+td('Km totali (A/R)',s.trasfertaKmTotali?s.trasfertaKmTotali+' km':'')+td('Km eccedenti soglia 100 km',s.trasfertaKmEccedenti?s.trasfertaKmEccedenti+' km':'')+td('Ore viaggio eccedenti',s.trasfertaOreEccedenti?s.trasfertaOreEccedenti+' h':'')+td('Trasferta',badge))}${costoHtml}</div>`;
   }
   // Firma
   const firmaClienteHtml=s.firmaCliente?`<img src="${s.firmaCliente}" style="max-height:64px;max-width:220px;display:block;margin-bottom:4px;">`:'' ;
