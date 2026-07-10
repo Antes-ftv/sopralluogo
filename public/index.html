@@ -195,7 +195,7 @@
   .btn-upload-layout{background:var(--green-light);color:var(--green);border:1px dashed var(--green);border-radius:6px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:600;}
   .btn-upload-layout:hover{background:var(--green);color:white;}
   .btn-remove-layout{background:var(--red-light);color:var(--red);border:1px solid var(--red);border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;}
-  #signature-canvas{display:block;border:1.5px solid var(--border);border-radius:8px;background:white;touch-action:none;cursor:crosshair;width:100%;height:140px;}
+  #signature-canvas,#signature-tecnico-canvas{display:block;border:1.5px solid var(--border);border-radius:8px;background:white;touch-action:none;cursor:crosshair;width:100%;height:140px;}
   .btn-clear-sign{background:var(--red-light);color:var(--red);border:1px solid var(--red);border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;}
 
   @media(max-width:600px){
@@ -779,19 +779,31 @@
         </div>
       </div>
 
-      <!-- FIRMA CLIENTE -->
+      <!-- FIRME -->
       <div class="section">
-        <div class="section-header" style="background:#4a148c;">✍️ Firma cliente</div>
+        <div class="section-header" style="background:#4a148c;">✍️ Firme</div>
         <div class="section-body">
-          <p style="font-size:13px;color:var(--gray);margin-bottom:12px;">Il cliente firma qui al termine del sopralluogo. La firma verrà inclusa nel report.</p>
-          <div class="form-row">
-            <div class="form-group full"><label>Nome cliente (conferma)</label><input type="text" id="f-firma-nome" placeholder="Nome e cognome del firmatario"></div>
-          </div>
-          <label style="font-size:13px;font-weight:600;color:var(--gray);margin-bottom:6px;display:block;">Firma</label>
-          <canvas id="signature-canvas" width="600" height="140"></canvas>
-          <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;">
-            <button class="btn-clear-sign" onclick="clearSignature()">🗑️ Cancella firma</button>
-            <span id="sign-status" style="font-size:12px;color:var(--gray);">Firma qui sopra con il dito o il mouse</span>
+          <div class="form-row" style="align-items:flex-start;gap:24px;">
+            <!-- Firma cliente -->
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:700;color:var(--gray);margin-bottom:8px;">👤 Firma cliente</div>
+              <div class="form-group" style="margin-bottom:10px;"><label>Nome cliente (conferma)</label><input type="text" id="f-firma-nome" placeholder="Nome e cognome del firmatario"></div>
+              <canvas id="signature-canvas" width="600" height="140"></canvas>
+              <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;">
+                <button class="btn-clear-sign" onclick="clearSignature()">🗑️ Cancella</button>
+                <span id="sign-status" style="font-size:12px;color:var(--gray);">Firma qui sopra con il dito o il mouse</span>
+              </div>
+            </div>
+            <!-- Firma tecnico -->
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:700;color:var(--gray);margin-bottom:8px;">👷 Firma tecnico</div>
+              <div class="form-group" style="margin-bottom:10px;"><label>Nome tecnico (conferma)</label><input type="text" id="f-firma-tecnico-nome" placeholder="Nome e cognome del tecnico"></div>
+              <canvas id="signature-tecnico-canvas" width="600" height="140"></canvas>
+              <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;">
+                <button class="btn-clear-sign" onclick="clearSignatureTecnico()">🗑️ Cancella</button>
+                <span id="sign-tecnico-status" style="font-size:12px;color:var(--gray);">Firma qui sopra con il dito o il mouse</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -934,7 +946,9 @@ const toggles = {};
 const checks = {};
 let layoutBase64 = null;
 let signatureData = null;
+let signatureTecnicoData = null;
 let isDrawing = false, lastX = 0, lastY = 0;
+let isDrawingT = false, lastXT = 0, lastYT = 0;
 
 // ══ API ══
 async function api(method, path, body) {
@@ -1152,6 +1166,8 @@ function readForm() {
     layoutImpianto:layoutBase64||null,
     firmaClienteNome:document.getElementById('f-firma-nome').value,
     firmaCliente:signatureData||null,
+    firmaTecnicoNome:document.getElementById('f-firma-tecnico-nome').value,
+    firmaTecnico:signatureTecnicoData||null,
     trasfertaIndirizzo:document.getElementById('f-trasferta-indirizzo').value,
     trasfertaLuogo:document.getElementById('f-trasferta-luogo').value,
     trasfertaKmTotali:trasfertaDati?.kmTotali||null,
@@ -1416,6 +1432,15 @@ function populateForm(s) {
       img.src=s.firmaCliente;
     }
   }
+  set('f-firma-tecnico-nome',s.firmaTecnicoNome);
+  if(s.firmaTecnico){
+    const canvas=document.getElementById('signature-tecnico-canvas');
+    if(canvas){
+      const img=new Image();
+      img.onload=()=>{canvas.getContext('2d').drawImage(img,0,0);signatureTecnicoData=s.firmaTecnico;const st=document.getElementById('sign-tecnico-status');if(st){st.textContent='✅ Firma acquisita';st.style.color='#2e7d32';}};
+      img.src=s.firmaTecnico;
+    }
+  }
   // Extra voci
   loadExtraData(s.extraVoci||[]);
   checkSPI();
@@ -1432,9 +1457,13 @@ function resetForm() {
   layoutBase64=null; renderLayoutPreview();
   const sc=document.getElementById('signature-canvas');
   if(sc){sc.getContext('2d').clearRect(0,0,sc.width,sc.height);}
-  signatureData=null;
+  signatureData=null; signatureTecnicoData=null;
+  const sc2=document.getElementById('signature-tecnico-canvas');
+  if(sc2){sc2.getContext('2d').clearRect(0,0,sc2.width,sc2.height);}
   const ss=document.getElementById('sign-status');
   if(ss){ss.textContent='Firma qui sopra con il dito o il mouse';ss.style.color='';}
+  const ss2=document.getElementById('sign-tecnico-status');
+  if(ss2){ss2.textContent='Firma qui sopra con il dito o il mouse';ss2.style.color='';}
   extraRighe=[]; renderExtraTable();
 }
 
@@ -1502,7 +1531,7 @@ function newSurvey() {
   loadFotoSection();
   loadCommittenti();
   window.scrollTo(0,0);
-  setTimeout(initSignaturePad,100);
+  setTimeout(()=>{initSignaturePad();initSignaturePadTecnico();},100);
 }
 
 function editSurvey(id) {
@@ -1513,7 +1542,7 @@ function editSurvey(id) {
   showView('form-view');
   loadFotoSection();
   window.scrollTo(0,0);
-  setTimeout(initSignaturePad,100);
+  setTimeout(()=>{initSignaturePad();initSignaturePadTecnico();},100);
 }
 
 async function saveSurvey(status) {
@@ -1901,6 +1930,51 @@ function clearSignature(){
   if(st){st.textContent='Firma qui sopra con il dito o il mouse';st.style.color='';}
 }
 
+function initSignaturePadTecnico() {
+  const canvas=document.getElementById('signature-tecnico-canvas');
+  if(!canvas||canvas._signInit) return;
+  canvas._signInit=true;
+  const ctx=canvas.getContext('2d');
+  ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.strokeStyle='#1a237e';
+  function getPos(e){
+    const rect=canvas.getBoundingClientRect();
+    const sx=canvas.width/rect.width, sy=canvas.height/rect.height;
+    const src=e.touches?e.touches[0]:e;
+    return[(src.clientX-rect.left)*sx,(src.clientY-rect.top)*sy];
+  }
+  canvas.addEventListener('mousedown',e=>{isDrawingT=true;[lastXT,lastYT]=getPos(e);});
+  canvas.addEventListener('mousemove',e=>{
+    if(!isDrawingT)return;
+    const[x,y]=getPos(e);
+    ctx.beginPath();ctx.moveTo(lastXT,lastYT);ctx.lineTo(x,y);ctx.stroke();
+    [lastXT,lastYT]=[x,y];
+  });
+  canvas.addEventListener('mouseup',()=>{isDrawingT=false;_saveSignTecnico();});
+  canvas.addEventListener('mouseleave',()=>{isDrawingT=false;});
+  canvas.addEventListener('touchstart',e=>{e.preventDefault();isDrawingT=true;[lastXT,lastYT]=getPos(e);},{passive:false});
+  canvas.addEventListener('touchmove',e=>{
+    e.preventDefault();if(!isDrawingT)return;
+    const[x,y]=getPos(e);
+    ctx.beginPath();ctx.moveTo(lastXT,lastYT);ctx.lineTo(x,y);ctx.stroke();
+    [lastXT,lastYT]=[x,y];
+  },{passive:false});
+  canvas.addEventListener('touchend',e=>{e.preventDefault();isDrawingT=false;_saveSignTecnico();},{passive:false});
+}
+
+function _saveSignTecnico(){
+  const canvas=document.getElementById('signature-tecnico-canvas'); if(!canvas) return;
+  signatureTecnicoData=canvas.toDataURL('image/png');
+  const st=document.getElementById('sign-tecnico-status');
+  if(st){st.textContent='✅ Firma acquisita';st.style.color='#2e7d32';}
+}
+
+function clearSignatureTecnico(){
+  const canvas=document.getElementById('signature-tecnico-canvas'); if(!canvas) return;
+  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+  signatureTecnicoData=null;
+  const st=document.getElementById('sign-tecnico-status');
+  if(st){st.textContent='Firma qui sopra con il dito o il mouse';st.style.color='';}
+}
 
 // ══ REPORT ══
 function row(label,value,cls=''){if(!value)return'';return`<tr><th>${label}</th><td class="rv ${cls}">${value}</td></tr>`;}
@@ -2004,7 +2078,12 @@ function renderReport(s, photos=[]) {
   ${fotoHtml}
   ${sH(sn,"SCHEMA SEMPLIFICATO DELL'IMPIANTO")}<p style="font-size:13px;margin-bottom:10px;">Schema dell'impianto fotovoltaico rilevato durante il sopralluogo.</p>${schema}${tWrap(td('Potenza contatore esistente',s.potContatore?s.potContatore+' kW':'')+td('Impianto di terra esistente',s.terra?s.terra+(s.terraSezione?' — Sez. '+s.terraSezione+' mm²':''):'')+td('Interruttore generale',s.interruttore?s.interruttore+(s.interruttoreModello?' — '+s.interruttoreModello:''):'')+((s.acMt||s.acSez)?td('Linea AC',(s.acMt?s.acMt+' mt':'')+(s.acSez?' — Sez. '+s.acSez+' mm²':'')+(s.acPercorso?' — '+s.acPercorso:'')+(s.noteAc?' — '+s.noteAc:'')):'')+(( s.dcMt||s.dcSez)?td('Linea DC',(s.dcMt?s.dcMt+' mt':'')+(s.dcSez?' — Sez. '+s.dcSez+' mm²':'')+(s.dcPercorso?' — '+s.dcPercorso:'')+(s.noteDc?' — '+s.noteDc:'')):''))}
   ${sH(sn+1,"MESSA IN SICUREZZA")}${tWrap(td('Metodo di messa in sicurezza',s.sicurezza||'')+td('Utilizzo cesta',s.cesta?yesno(s.cesta)+( s.cestaGiorni?' — '+s.cestaGiorni+' giorni':'')+(s.cestaSu?' su '+s.cestaSu:''):'')+td('Altro',s.sicurezzaAltro||''))}
-  ${sH(sn+2,"NOTE TECNICHE E OSSERVAZIONI")}${tWrap(td('Calata stringhe',[s.calataPercorso,s.calataForatura,s.noteCalata].filter(Boolean).join(' — '))+td('Posizionamento inverter',s.posInverter||'')+((s.batteria==='si')?td('Posizionamento batteria',s.posBatteria||''):'')+((s.colonnina==='si')?td('Posizionamento Wallbox',s.posColonnina||''):'')+td('Connessione internet',[s.wifi,s.noteWifi].filter(Boolean).join(' — '))+td('Funzione backup',s.backup||'')+td('Eventuali lavori a carico cliente',s.lavoriCliente||'')+td('Note riservate (ufficio)',s.noteFinali||''))}
+  ${sH(sn+2,"NOTE TECNICHE E OSSERVAZIONI")}${tWrap(td('Calata stringhe',[s.calataPercorso,s.calataForatura,s.noteCalata].filter(Boolean).join(' — '))+td('Posizionamento inverter',s.posInverter||'')+((s.batteria==='si')?td('Posizionamento batteria',s.posBatteria||''):'')+((s.colonnina==='si')?td('Posizionamento Wallbox',s.posColonnina||''):'')+td('Connessione internet',[s.wifi,s.noteWifi].filter(Boolean).join(' — '))+td('Eventuali lavori a carico cliente',s.lavoriCliente||'')+td('Note riservate (ufficio)',s.noteFinali||''))}
+  <div style="margin:20px 0 24px;padding:16px 20px;border:2px solid #cfd8dc;border-radius:8px;">
+    <div style="font-weight:700;font-size:13px;margin-bottom:8px;">Per Conferma Cliente</div>
+    ${firmaClienteHtml}<div style="border-bottom:1.5px solid #263238;${firmaMarginTop}"></div>
+    <div style="font-size:11px;color:#546e7a;margin-top:4px;">${s.firmaClienteNome||s.cliente||''}</div>
+  </div>
   ${sH(sn+3,"STIMA TEMPI DI INSTALLAZIONE")}${tWrap(td('Giorni necessari per fine lavori',s.giorniLavori?s.giorniLavori+' giorni lavorativi':''))}
   ${trasfertaHtml}
   ${(()=>{
@@ -2014,9 +2093,8 @@ function renderReport(s, photos=[]) {
     const totaleExtra=voci.reduce((s,r)=>s+(r.qty||0)*(r.costo||0),0).toFixed(2);
     return `<div id="report-extra">${sH(sn+5,'VOCI EXTRA / LAVORAZIONI AGGIUNTIVE')}<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><thead><tr style="background:#f3e5f5;"><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:left;">Descrizione</th><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:center;width:80px;">Qtà</th><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:right;width:130px;">Costo unit.</th><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:right;width:120px;">Totale</th></tr></thead><tbody>${righe}</tbody><tfoot><tr style="background:#ede7f6;"><td colspan="3" style="border:1px solid #cfd8dc;padding:8px 10px;font-weight:800;font-size:13px;">TOTALE EXTRA</td><td style="border:1px solid #cfd8dc;padding:8px 10px;font-weight:800;font-size:14px;text-align:right;color:#4a148c;">€ ${totaleExtra}</td></tr></tfoot></table></div>`;
   })()}
-  <div style="display:flex;gap:40px;margin-top:40px;padding-top:20px;border-top:2px solid #cfd8dc;">
-    <div style="flex:1;font-size:13px;"><div style="font-weight:700;margin-bottom:60px;">Firma Tecnico</div><div style="border-bottom:1.5px solid #263238;"></div><div style="font-size:11px;color:#546e7a;margin-top:4px;">${s.tecnico||''}</div></div>
-    <div style="flex:1;font-size:13px;"><div style="font-weight:700;margin-bottom:8px;">Per Conferma Cliente</div>${firmaClienteHtml}<div style="border-bottom:1.5px solid #263238;${firmaMarginTop}"></div><div style="font-size:11px;color:#546e7a;margin-top:4px;">${s.firmaClienteNome||s.cliente||''}</div></div>
+  <div style="margin-top:40px;padding-top:20px;border-top:2px solid #cfd8dc;max-width:320px;">
+    <div style="font-size:13px;"><div style="font-weight:700;margin-bottom:8px;">Firma Tecnico</div>${s.firmaTecnico?`<img src="${s.firmaTecnico}" style="max-height:64px;max-width:220px;display:block;margin-bottom:4px;">`:'<div style="height:52px;"></div>'}<div style="border-bottom:1.5px solid #263238;"></div><div style="font-size:11px;color:#546e7a;margin-top:4px;">${s.firmaTecnicoNome||s.tecnico||''}</div></div>
   </div>
   <div style="font-size:10px;color:#546e7a;text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #eceff1;">ANTES SRL — Relazione di Sopralluogo — ${s.cliente||'—'} — ${s.localita||'—'}</div>`;
 }
