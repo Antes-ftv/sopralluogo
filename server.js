@@ -262,12 +262,13 @@ app.get('/api/admin/backup', authMiddleware, adminOnly, (req, res) => {
     ...p,
     url: p.filename.includes('/') ? cloudinary.url(p.filename, { secure: true }) : `/uploads/${p.filename}`
   }));
-  res.json({ exportedAt: new Date().toISOString(), surveys, users, photos });
+  const committenti = db.prepare('SELECT id, nome FROM committenti ORDER BY nome ASC').all();
+  res.json({ exportedAt: new Date().toISOString(), surveys, users, photos, committenti });
 });
 
 app.post('/api/admin/restore', authMiddleware, adminOnly, (req, res) => {
-  const { surveys = [], users = [], photos = [] } = req.body || {};
-  let addedSurveys = 0, skippedSurveys = 0, addedUsers = 0, skippedUsers = 0, addedPhotos = 0;
+  const { surveys = [], users = [], photos = [], committenti = [] } = req.body || {};
+  let addedSurveys = 0, skippedSurveys = 0, addedUsers = 0, skippedUsers = 0, addedPhotos = 0, addedCommittenti = 0;
   const insertSurvey = db.prepare('INSERT OR IGNORE INTO surveys (id, data, status, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
   for (const s of surveys) {
     const { id, status, createdById, createdByName, createdAt, updatedAt, ...data } = s;
@@ -284,7 +285,13 @@ app.post('/api/admin/restore', authMiddleware, adminOnly, (req, res) => {
     const result = insertPhoto.run(p.id, p.survey_id, p.category || 'altro', p.nota || '', p.filename, p.created_at || new Date().toISOString());
     if (result.changes > 0) addedPhotos++;
   }
-  res.json({ success: true, addedSurveys, skippedSurveys, addedUsers, skippedUsers, addedPhotos });
+  const insertCommittente = db.prepare('INSERT OR IGNORE INTO committenti (id, nome) VALUES (?, ?)');
+  for (const c of committenti) {
+    if(!c.id || !c.nome) continue;
+    const result = insertCommittente.run(c.id, c.nome.trim());
+    if(result.changes > 0) addedCommittenti++;
+  }
+  res.json({ success: true, addedSurveys, skippedSurveys, addedUsers, skippedUsers, addedPhotos, addedCommittenti });
 });
 
 app.delete('/api/admin/surveys', authMiddleware, adminOnly, async (req, res) => {
