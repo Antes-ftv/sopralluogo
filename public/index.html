@@ -373,6 +373,32 @@
         </div>
       </div>
 
+      <!-- SEZIONE EXTRA -->
+      <div class="section" id="sezione-extra">
+        <div class="section-header" style="background:#4a148c;color:white;">➕ Voci extra / Lavorazioni aggiuntive</div>
+        <div class="section-body">
+          <p style="font-size:12px;color:#777;margin:0 0 12px;">Aggiungi voci non incluse nel listino standard. Il totale verrà mostrato nel report cliente.</p>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;" id="extra-table">
+            <thead>
+              <tr style="background:#f3e5f5;">
+                <th style="padding:8px 10px;border:1px solid #ce93d8;text-align:left;width:50%;">Descrizione</th>
+                <th style="padding:8px 10px;border:1px solid #ce93d8;text-align:center;width:12%;">Qtà</th>
+                <th style="padding:8px 10px;border:1px solid #ce93d8;text-align:center;width:18%;">Costo unitario (€)</th>
+                <th style="padding:8px 10px;border:1px solid #ce93d8;text-align:center;width:15%;">Totale (€)</th>
+                <th style="padding:8px 10px;border:1px solid #ce93d8;text-align:center;width:5%;"></th>
+              </tr>
+            </thead>
+            <tbody id="extra-tbody"></tbody>
+          </table>
+          <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <button onclick="addExtraRow()" style="background:#6a1b9a;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;">+ Aggiungi voce</button>
+            <div id="extra-totale-box" style="display:none;background:#f3e5f5;border:1px solid #ce93d8;border-radius:8px;padding:8px 16px;font-size:14px;font-weight:700;color:#4a148c;">
+              Totale extra: € <span id="extra-totale">0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="section">
         <div class="section-header">⚡ Impianto proposto</div>
         <div class="section-body">
@@ -1136,11 +1162,87 @@ function readForm() {
     trasfertaPasti:trasfertaDati?._pasti||null,
     trasfertaPernottamento:trasfertaDati?._pernottamento||0,
     trasfertaTotale:trasfertaDati?._totale||null,
+    extraVoci:getExtraData(),
   };
 }
 
 // ── TRASFERTA ────────────────────────────────────────────
 let trasfertaDati = null;
+
+// ══ EXTRA VOCI ══
+let extraRighe = [];
+
+function addExtraRow(desc='', qty=1, costo=0) {
+  const id = Date.now() + Math.random();
+  extraRighe.push({id, desc, qty, costo});
+  renderExtraTable();
+}
+
+function removeExtraRow(id) {
+  extraRighe = extraRighe.filter(r => r.id !== id);
+  renderExtraTable();
+}
+
+function renderExtraTable() {
+  const tbody = document.getElementById('extra-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = extraRighe.map(r => {
+    const totale = (parseFloat(r.costo)||0) * (parseFloat(r.qty)||0);
+    return `<tr>
+      <td style="padding:6px 8px;border:1px solid #e1bee7;">
+        <input type="text" value="${r.desc.replace(/"/g,'&quot;')}" placeholder="Descrizione voce"
+          oninput="updateExtra(${r.id},'desc',this.value)"
+          style="width:100%;border:none;outline:none;font-size:13px;background:transparent;">
+      </td>
+      <td style="padding:6px 8px;border:1px solid #e1bee7;text-align:center;">
+        <input type="number" value="${r.qty}" min="0" step="0.5"
+          oninput="updateExtra(${r.id},'qty',this.value)"
+          style="width:60px;border:none;outline:none;font-size:13px;text-align:center;background:transparent;">
+      </td>
+      <td style="padding:6px 8px;border:1px solid #e1bee7;text-align:center;">
+        <input type="number" value="${r.costo}" min="0" step="0.01"
+          oninput="updateExtra(${r.id},'costo',this.value)"
+          style="width:90px;border:none;outline:none;font-size:13px;text-align:center;background:transparent;">
+      </td>
+      <td style="padding:6px 8px;border:1px solid #e1bee7;text-align:center;font-weight:700;color:#4a148c;">${totale.toFixed(2)}</td>
+      <td style="padding:6px 8px;border:1px solid #e1bee7;text-align:center;">
+        <button onclick="removeExtraRow(${r.id})" style="background:none;border:none;cursor:pointer;color:#c62828;font-size:16px;line-height:1;">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+  aggiornaExtraTotale();
+}
+
+function updateExtra(id, field, value) {
+  const r = extraRighe.find(r => r.id === id);
+  if(!r) return;
+  r[field] = field === 'desc' ? value : parseFloat(value)||0;
+  // ricalcola totale riga senza fare re-render (per non perdere il focus)
+  const rows = document.querySelectorAll('#extra-tbody tr');
+  const idx = extraRighe.findIndex(r => r.id === id);
+  if(rows[idx]) {
+    const totCell = rows[idx].querySelectorAll('td')[3];
+    if(totCell) totCell.textContent = (r.qty * r.costo).toFixed(2);
+  }
+  aggiornaExtraTotale();
+}
+
+function aggiornaExtraTotale() {
+  const tot = extraRighe.reduce((s,r) => s + (r.qty||0)*(r.costo||0), 0);
+  const totEl = document.getElementById('extra-totale');
+  const box = document.getElementById('extra-totale-box');
+  if(totEl) totEl.textContent = tot.toFixed(2);
+  if(box) box.style.display = extraRighe.length > 0 ? '' : 'none';
+}
+
+function getExtraData() {
+  return extraRighe.map(r => ({desc:r.desc, qty:r.qty, costo:r.costo}));
+}
+
+function loadExtraData(arr) {
+  extraRighe = (arr||[]).map(r => ({id: Date.now()+Math.random(), desc:r.desc||'', qty:r.qty||1, costo:r.costo||0}));
+  renderExtraTable();
+}
 
 async function calcolaTrasferta() {
   const indirizzo = document.getElementById('f-trasferta-indirizzo').value.trim();
@@ -1314,6 +1416,8 @@ function populateForm(s) {
       img.src=s.firmaCliente;
     }
   }
+  // Extra voci
+  loadExtraData(s.extraVoci||[]);
   checkSPI();
 }
 
@@ -1331,6 +1435,7 @@ function resetForm() {
   signatureData=null;
   const ss=document.getElementById('sign-status');
   if(ss){ss.textContent='Firma qui sopra con il dito o il mouse';ss.style.color='';}
+  extraRighe=[]; renderExtraTable();
 }
 
 // ══ SURVEYS ══
@@ -1803,9 +1908,11 @@ function yesno(val){if(!val)return'—';if(val==='si')return'<span class="rv yes
 
 function printSenzaTrasferta() {
   const el = document.getElementById('report-trasferta');
+  const ex = document.getElementById('report-extra');
   if(el) el.style.display = 'none';
+  if(ex) ex.style.display = 'none';
   window.print();
-  setTimeout(() => { if(el) el.style.display = ''; }, 500);
+  setTimeout(() => { if(el) el.style.display = ''; if(ex) ex.style.display = ''; }, 500);
 }
 
 function renderReport(s, photos=[]) {
@@ -1900,6 +2007,13 @@ function renderReport(s, photos=[]) {
   ${sH(sn+2,"NOTE TECNICHE E OSSERVAZIONI")}${tWrap(td('Calata stringhe',[s.calataPercorso,s.calataForatura,s.noteCalata].filter(Boolean).join(' — '))+td('Posizionamento inverter',s.posInverter||'')+((s.batteria==='si')?td('Posizionamento batteria',s.posBatteria||''):'')+((s.colonnina==='si')?td('Posizionamento Wallbox',s.posColonnina||''):'')+td('Connessione internet',[s.wifi,s.noteWifi].filter(Boolean).join(' — '))+td('Funzione backup',s.backup||'')+td('Eventuali lavori a carico cliente',s.lavoriCliente||'')+td('Note riservate (ufficio)',s.noteFinali||''))}
   ${sH(sn+3,"STIMA TEMPI DI INSTALLAZIONE")}${tWrap(td('Giorni necessari per fine lavori',s.giorniLavori?s.giorniLavori+' giorni lavorativi':''))}
   ${trasfertaHtml}
+  ${(()=>{
+    const voci=s.extraVoci||[];
+    if(!voci.length) return '';
+    const righe=voci.map(r=>{const tot=((r.qty||0)*(r.costo||0)).toFixed(2);return`<tr><td style="border:1px solid #cfd8dc;padding:7px 10px;font-size:13px;">${r.desc||''}</td><td style="border:1px solid #cfd8dc;padding:7px 10px;font-size:13px;text-align:center;">${r.qty||0}</td><td style="border:1px solid #cfd8dc;padding:7px 10px;font-size:13px;text-align:right;">€ ${parseFloat(r.costo||0).toFixed(2)}</td><td style="border:1px solid #cfd8dc;padding:7px 10px;font-size:13px;text-align:right;font-weight:700;">€ ${tot}</td></tr>`;}).join('');
+    const totaleExtra=voci.reduce((s,r)=>s+(r.qty||0)*(r.costo||0),0).toFixed(2);
+    return `<div id="report-extra">${sH(sn+5,'VOCI EXTRA / LAVORAZIONI AGGIUNTIVE')}<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><thead><tr style="background:#f3e5f5;"><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:left;">Descrizione</th><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:center;width:80px;">Qtà</th><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:right;width:130px;">Costo unit.</th><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:right;width:120px;">Totale</th></tr></thead><tbody>${righe}</tbody><tfoot><tr style="background:#ede7f6;"><td colspan="3" style="border:1px solid #cfd8dc;padding:8px 10px;font-weight:800;font-size:13px;">TOTALE EXTRA</td><td style="border:1px solid #cfd8dc;padding:8px 10px;font-weight:800;font-size:14px;text-align:right;color:#4a148c;">€ ${totaleExtra}</td></tr></tfoot></table></div>`;
+  })()}
   <div style="display:flex;gap:40px;margin-top:40px;padding-top:20px;border-top:2px solid #cfd8dc;">
     <div style="flex:1;font-size:13px;"><div style="font-weight:700;margin-bottom:60px;">Firma Tecnico</div><div style="border-bottom:1.5px solid #263238;"></div><div style="font-size:11px;color:#546e7a;margin-top:4px;">${s.tecnico||''}</div></div>
     <div style="flex:1;font-size:13px;"><div style="font-weight:700;margin-bottom:8px;">Per Conferma Cliente</div>${firmaClienteHtml}<div style="border-bottom:1.5px solid #263238;${firmaMarginTop}"></div><div style="font-size:11px;color:#546e7a;margin-top:4px;">${s.firmaClienteNome||s.cliente||''}</div></div>
