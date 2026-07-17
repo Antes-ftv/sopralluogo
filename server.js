@@ -428,7 +428,7 @@ app.post('/api/trasferta', authMiddleware, async (req, res) => {
       tariffe: {
         rimborsoViaggioOra: 18.00,
         rimborsoKmFurgone: 0.80,
-        rimborsoParti: 20.00,
+        rimborsoPasti: 20.00,
         rimborsoPernottamento: 50.00,
         indennitaTrasferta: 40.00
       }
