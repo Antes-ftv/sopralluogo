@@ -1604,8 +1604,8 @@ function populateForm(s) {
   // Extra voci
   loadExtraData(s.extraVoci||[]);
   // Distinta componenti
-  if(s.tipo==='residenziale') loadDistintaData(s.distintivaComponenti||[]);
-  if(s.tipo==='residenziale') loadStrutturaData(s.strutturaComponenti||[]);
+  if(s.type==='residenziale') loadDistintaData(s.distintivaComponenti||[]);
+  if(s.type==='residenziale') loadStrutturaData(s.strutturaComponenti||[]);
   checkSPI();
 }
 
@@ -2245,13 +2245,13 @@ function renderReport(s, photos=[]) {
   ${sH(sn+1,"MESSA IN SICUREZZA")}${tWrap(td('Metodo di messa in sicurezza',s.sicurezza||'')+td('Utilizzo cesta',s.cesta?yesno(s.cesta)+( s.cestaGiorni?' — '+s.cestaGiorni+' giorni':'')+(s.cestaSu?' su '+s.cestaSu:''):'')+td('Altro',s.sicurezzaAltro||''))}
   ${(()=>{
     const dc=s.distintivaComponenti||[];
-    if(s.tipo!=='residenziale'||!dc.length) return '';
+    if(s.type!=='residenziale'||!dc.length) return '';
     const righe=dc.map(r=>`<tr><td style="border:1px solid #cfd8dc;padding:6px 10px;font-size:13px;">${r.desc||''}</td><td style="border:1px solid #cfd8dc;padding:6px 10px;font-size:13px;text-align:center;font-weight:700;">${r.qty||0}</td><td style="border:1px solid #cfd8dc;padding:6px 10px;font-size:12px;text-align:center;color:#546e7a;">${r.um||''}</td></tr>`).join('');
     return `<div style="margin-bottom:20px;"><div style="background:#00695c;color:white;padding:10px 14px;font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;border-radius:4px 4px 0 0;margin-bottom:0;">📦 Distinta componenti elettrici</div><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#e0f2f1;"><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:left;">Componente</th><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:center;width:80px;">Qtà</th><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:center;width:80px;">U.M.</th></tr></thead><tbody>${righe}</tbody></table></div>`;
   })()}
   ${(()=>{
     const sc=s.strutturaComponenti||[];
-    if(s.tipo!=='residenziale'||!sc.length||sc.every(r=>!r.qty)) return '';
+    if(s.type!=='residenziale'||!sc.length||sc.every(r=>!r.qty)) return '';
     const righe=sc.filter(r=>r.qty>0).map(r=>`<tr><td style="border:1px solid #d7ccc8;padding:6px 10px;font-size:13px;">${r.desc||''}</td><td style="border:1px solid #d7ccc8;padding:6px 10px;font-size:13px;text-align:center;font-weight:700;">${r.qty||0}</td><td style="border:1px solid #d7ccc8;padding:6px 10px;font-size:12px;text-align:center;color:#546e7a;">${r.um||''}</td></tr>`).join('');
     if(!righe) return '';
     return `<div style="margin-bottom:20px;"><div style="background:#5d4037;color:white;padding:10px 14px;font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;border-radius:4px 4px 0 0;margin-bottom:0;">🔩 Distinta struttura fissaggio pannelli</div><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#efebe9;"><th style="border:1px solid #d7ccc8;padding:7px 10px;font-size:12px;text-align:left;">Componente</th><th style="border:1px solid #d7ccc8;padding:7px 10px;font-size:12px;text-align:center;width:80px;">Qtà</th><th style="border:1px solid #d7ccc8;padding:7px 10px;font-size:12px;text-align:center;width:80px;">U.M.</th></tr></thead><tbody>${righe}</tbody></table></div>`;
