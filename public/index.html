@@ -373,6 +373,47 @@
         </div>
       </div>
 
+      <!-- DISTINTA COMPONENTI (solo residenziale) -->
+      <div class="section" id="sezione-distinta" style="display:none;">
+        <div class="section-header" style="background:#00695c;color:white;">📦 Distinta componenti elettrici</div>
+        <div class="section-body">
+          <p style="font-size:12px;color:#777;margin:0 0 12px;">Generata automaticamente per impianti residenziali. Le quantità sono modificabili.</p>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;" id="distinta-table">
+            <thead>
+              <tr style="background:#e0f2f1;">
+                <th style="padding:8px 10px;border:1px solid #80cbc4;text-align:left;width:55%;">Componente</th>
+                <th style="padding:8px 10px;border:1px solid #80cbc4;text-align:center;width:15%;">Qtà</th>
+                <th style="padding:8px 10px;border:1px solid #80cbc4;text-align:center;width:15%;">U.M.</th>
+                <th style="padding:8px 10px;border:1px solid #80cbc4;text-align:center;width:15%;">Note</th>
+              </tr>
+            </thead>
+            <tbody id="distinta-tbody"></tbody>
+          </table>
+          <div style="margin-top:10px;display:flex;gap:10px;">
+            <button onclick="calcolaDistinta()" style="background:#00695c;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;">🔄 Ricalcola da cavi</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DISTINTA STRUTTURA FISSAGGIO (solo residenziale) -->
+      <div class="section" id="sezione-struttura" style="display:none;">
+        <div class="section-header" style="background:#5d4037;color:white;">🔩 Distinta struttura fissaggio pannelli</div>
+        <div class="section-body">
+          <p style="font-size:12px;color:#777;margin:0 0 12px;">Inserire le quantità in base al layout di posizionamento moduli FV.</p>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;" id="struttura-table">
+            <thead>
+              <tr style="background:#efebe9;">
+                <th style="padding:8px 10px;border:1px solid #bcaaa4;text-align:left;width:55%;">Componente</th>
+                <th style="padding:8px 10px;border:1px solid #bcaaa4;text-align:center;width:15%;">Qtà</th>
+                <th style="padding:8px 10px;border:1px solid #bcaaa4;text-align:center;width:15%;">U.M.</th>
+                <th style="padding:8px 10px;border:1px solid #bcaaa4;text-align:center;width:15%;">Note</th>
+              </tr>
+            </thead>
+            <tbody id="struttura-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- SEZIONE EXTRA -->
       <div class="section" id="sezione-extra">
         <div class="section-header" style="background:#4a148c;color:white;">➕ Voci extra / Lavorazioni aggiuntive</div>
@@ -1098,6 +1139,14 @@ function setType(type) {
   document.getElementById('type-ci').classList.toggle('active',type==='ci');
   document.getElementById('ci-note').style.display=type==='ci'?'block':'none';
   document.getElementById('ci-extra-impianto').style.display=type==='ci'?'block':'none';
+  const sd=document.getElementById('sezione-distinta');
+  if(sd) sd.style.display=type==='residenziale'?'':'none';
+  const ss=document.getElementById('sezione-struttura');
+  if(ss) ss.style.display=type==='residenziale'?'':'none';
+  if(type==='residenziale'){
+    if(!distintivaRighe.length) calcolaDistinta();
+    if(!strutturaRighe.length) initStruttura();
+  }
 }
 
 // ══ FORM READ/WRITE ══
@@ -1179,11 +1228,122 @@ function readForm() {
     trasfertaPernottamento:trasfertaDati?._pernottamento||0,
     trasfertaTotale:trasfertaDati?._totale||null,
     extraVoci:getExtraData(),
+    distintivaComponenti:currentType==='residenziale'?getDistintaData():[],
+    strutturaComponenti:currentType==='residenziale'?getStrutturaData():[],
   };
 }
 
 // ── TRASFERTA ────────────────────────────────────────────
 let trasfertaDati = null;
+
+// ══ DISTINTA COMPONENTI ══
+let distintivaRighe = [];
+
+const DISTINTA_FISSA = [
+  {desc:'Magnetotermico differenziale 32A Classe A - 6KA - 0.3 mA', qty:1, um:'pz', note:''},
+  {desc:'Sezionatore Portafusibile DC con fusibili 16A', qty:2, um:'pz', note:''},
+  {desc:'Magnetotermico 32A 4.5 KA', qty:1, um:'pz', note:''},
+  {desc:'Centralino 8 moduli', qty:1, um:'pz', note:''},
+  {desc:'Tubo rigido Ø25', qty:0, um:'pz', note:'verghe da 3 mt — calcolato da cavi DC+AC'},
+  {desc:'Canalina 60x60', qty:1, um:'verga', note:''},
+  {desc:'Tappi canalina 60x60', qty:2, um:'pz', note:''},
+];
+
+function calcolaDistinta() {
+  const dcMt = parseFloat(document.getElementById('f-dc-mt').value) || 0;
+  const acMt = parseFloat(document.getElementById('f-ac-mt').value) || 0;
+  const tubiMt = dcMt + acMt;
+  distintivaRighe = DISTINTA_FISSA.map(r => ({
+    ...r,
+    qty: r.desc.startsWith('Tubo rigido') ? Math.ceil(tubiMt / 3) : r.qty
+  }));
+  renderDistintaTable();
+}
+
+function renderDistintaTable() {
+  const tbody = document.getElementById('distinta-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = distintivaRighe.map((r,i) => `<tr>
+    <td style="padding:6px 8px;border:1px solid #b2dfdb;">
+      <input type="text" value="${r.desc.replace(/"/g,'&quot;')}"
+        oninput="distintivaRighe[${i}].desc=this.value"
+        style="width:100%;border:none;outline:none;font-size:13px;background:transparent;">
+    </td>
+    <td style="padding:6px 8px;border:1px solid #b2dfdb;text-align:center;">
+      <input type="number" value="${r.qty}" min="0" step="0.5"
+        oninput="distintivaRighe[${i}].qty=parseFloat(this.value)||0"
+        style="width:60px;border:none;outline:none;font-size:13px;text-align:center;background:transparent;">
+    </td>
+    <td style="padding:6px 8px;border:1px solid #b2dfdb;text-align:center;color:#555;">${r.um}</td>
+    <td style="padding:6px 8px;border:1px solid #b2dfdb;font-size:11px;color:#777;">${r.note||''}</td>
+  </tr>`).join('');
+}
+
+function getDistintaData() {
+  return distintivaRighe.map(r=>({desc:r.desc,qty:r.qty,um:r.um,note:r.note||''}));
+}
+
+function loadDistintaData(arr) {
+  if(arr && arr.length>0){
+    distintivaRighe = arr.map(r=>({desc:r.desc||'',qty:r.qty||0,um:r.um||'pz',note:r.note||''}));
+  } else {
+    calcolaDistinta();
+  }
+  renderDistintaTable();
+}
+
+// ══ STRUTTURA FISSAGGIO ══
+const STRUTTURA_FISSA = [
+  {desc:'Binari', qty:0, um:'pz', note:''},
+  {desc:'Staffette a L', qty:0, um:'pz', note:''},
+  {desc:'Morsetti terminali', qty:0, um:'pz', note:''},
+  {desc:'Morsetti centrali', qty:0, um:'pz', note:''},
+  {desc:'Barre filettate Ø8', qty:0, um:'pz', note:''},
+  {desc:'Barre filettate Ø10', qty:0, um:'pz', note:''},
+  {desc:'Vitoni doppio filetto tetto legno', qty:0, um:'pz', note:''},
+  {desc:'Ancorante chimico', qty:0, um:'pz', note:''},
+  {desc:'Sigillante bituminoso', qty:0, um:'pz', note:''},
+  {desc:'Dadi M8', qty:0, um:'pz', note:''},
+  {desc:'Dadi M10', qty:0, um:'pz', note:''},
+];
+let strutturaRighe = [];
+
+function initStruttura() {
+  strutturaRighe = STRUTTURA_FISSA.map(r => ({...r}));
+  renderStrutturaTable();
+}
+
+function renderStrutturaTable() {
+  const tbody = document.getElementById('struttura-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = strutturaRighe.map((r,i) => `<tr>
+    <td style="padding:6px 8px;border:1px solid #bcaaa4;">
+      <input type="text" value="${r.desc.replace(/"/g,'&quot;')}"
+        oninput="strutturaRighe[${i}].desc=this.value"
+        style="width:100%;border:none;outline:none;font-size:13px;background:transparent;">
+    </td>
+    <td style="padding:6px 8px;border:1px solid #bcaaa4;text-align:center;">
+      <input type="number" value="${r.qty}" min="0" step="1"
+        oninput="strutturaRighe[${i}].qty=parseFloat(this.value)||0"
+        style="width:60px;border:none;outline:none;font-size:13px;text-align:center;background:transparent;">
+    </td>
+    <td style="padding:6px 8px;border:1px solid #bcaaa4;text-align:center;color:#555;">${r.um}</td>
+    <td style="padding:6px 8px;border:1px solid #bcaaa4;font-size:11px;color:#777;">${r.note||''}</td>
+  </tr>`).join('');
+}
+
+function getStrutturaData() {
+  return strutturaRighe.map(r=>({desc:r.desc,qty:r.qty,um:r.um,note:r.note||''}));
+}
+
+function loadStrutturaData(arr) {
+  if(arr && arr.length>0){
+    strutturaRighe = arr.map(r=>({desc:r.desc||'',qty:r.qty||0,um:r.um||'pz',note:r.note||''}));
+  } else {
+    initStruttura();
+  }
+  renderStrutturaTable();
+}
 
 // ══ EXTRA VOCI ══
 let extraRighe = [];
@@ -1443,6 +1603,9 @@ function populateForm(s) {
   }
   // Extra voci
   loadExtraData(s.extraVoci||[]);
+  // Distinta componenti
+  if(s.tipo==='residenziale') loadDistintaData(s.distintivaComponenti||[]);
+  if(s.tipo==='residenziale') loadStrutturaData(s.strutturaComponenti||[]);
   checkSPI();
 }
 
@@ -1465,6 +1628,8 @@ function resetForm() {
   const ss2=document.getElementById('sign-tecnico-status');
   if(ss2){ss2.textContent='Firma qui sopra con il dito o il mouse';ss2.style.color='';}
   extraRighe=[]; renderExtraTable();
+  distintivaRighe=[]; renderDistintaTable();
+  strutturaRighe=[]; renderStrutturaTable();
 }
 
 // ══ SURVEYS ══
@@ -2078,6 +2243,19 @@ function renderReport(s, photos=[]) {
   ${fotoHtml}
   ${sH(sn,"SCHEMA SEMPLIFICATO DELL'IMPIANTO")}<p style="font-size:13px;margin-bottom:10px;">Schema dell'impianto fotovoltaico rilevato durante il sopralluogo.</p>${schema}${tWrap(td('Potenza contatore esistente',s.potContatore?s.potContatore+' kW':'')+td('Impianto di terra esistente',s.terra?s.terra+(s.terraSezione?' — Sez. '+s.terraSezione+' mm²':''):'')+td('Interruttore generale',s.interruttore?s.interruttore+(s.interruttoreModello?' — '+s.interruttoreModello:''):'')+((s.acMt||s.acSez)?td('Linea AC',(s.acMt?s.acMt+' mt':'')+(s.acSez?' — Sez. '+s.acSez+' mm²':'')+(s.acPercorso?' — '+s.acPercorso:'')+(s.noteAc?' — '+s.noteAc:'')):'')+(( s.dcMt||s.dcSez)?td('Linea DC',(s.dcMt?s.dcMt+' mt':'')+(s.dcSez?' — Sez. '+s.dcSez+' mm²':'')+(s.dcPercorso?' — '+s.dcPercorso:'')+(s.noteDc?' — '+s.noteDc:'')):''))}
   ${sH(sn+1,"MESSA IN SICUREZZA")}${tWrap(td('Metodo di messa in sicurezza',s.sicurezza||'')+td('Utilizzo cesta',s.cesta?yesno(s.cesta)+( s.cestaGiorni?' — '+s.cestaGiorni+' giorni':'')+(s.cestaSu?' su '+s.cestaSu:''):'')+td('Altro',s.sicurezzaAltro||''))}
+  ${(()=>{
+    const dc=s.distintivaComponenti||[];
+    if(s.tipo!=='residenziale'||!dc.length) return '';
+    const righe=dc.map(r=>`<tr><td style="border:1px solid #cfd8dc;padding:6px 10px;font-size:13px;">${r.desc||''}</td><td style="border:1px solid #cfd8dc;padding:6px 10px;font-size:13px;text-align:center;font-weight:700;">${r.qty||0}</td><td style="border:1px solid #cfd8dc;padding:6px 10px;font-size:12px;text-align:center;color:#546e7a;">${r.um||''}</td></tr>`).join('');
+    return `<div style="margin-bottom:20px;"><div style="background:#00695c;color:white;padding:10px 14px;font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;border-radius:4px 4px 0 0;margin-bottom:0;">📦 Distinta componenti elettrici</div><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#e0f2f1;"><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:left;">Componente</th><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:center;width:80px;">Qtà</th><th style="border:1px solid #cfd8dc;padding:7px 10px;font-size:12px;text-align:center;width:80px;">U.M.</th></tr></thead><tbody>${righe}</tbody></table></div>`;
+  })()}
+  ${(()=>{
+    const sc=s.strutturaComponenti||[];
+    if(s.tipo!=='residenziale'||!sc.length||sc.every(r=>!r.qty)) return '';
+    const righe=sc.filter(r=>r.qty>0).map(r=>`<tr><td style="border:1px solid #d7ccc8;padding:6px 10px;font-size:13px;">${r.desc||''}</td><td style="border:1px solid #d7ccc8;padding:6px 10px;font-size:13px;text-align:center;font-weight:700;">${r.qty||0}</td><td style="border:1px solid #d7ccc8;padding:6px 10px;font-size:12px;text-align:center;color:#546e7a;">${r.um||''}</td></tr>`).join('');
+    if(!righe) return '';
+    return `<div style="margin-bottom:20px;"><div style="background:#5d4037;color:white;padding:10px 14px;font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;border-radius:4px 4px 0 0;margin-bottom:0;">🔩 Distinta struttura fissaggio pannelli</div><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#efebe9;"><th style="border:1px solid #d7ccc8;padding:7px 10px;font-size:12px;text-align:left;">Componente</th><th style="border:1px solid #d7ccc8;padding:7px 10px;font-size:12px;text-align:center;width:80px;">Qtà</th><th style="border:1px solid #d7ccc8;padding:7px 10px;font-size:12px;text-align:center;width:80px;">U.M.</th></tr></thead><tbody>${righe}</tbody></table></div>`;
+  })()}
   ${sH(sn+2,"NOTE TECNICHE E OSSERVAZIONI")}${tWrap(td('Calata stringhe',[s.calataPercorso,s.calataForatura,s.noteCalata].filter(Boolean).join(' — '))+td('Posizionamento inverter',s.posInverter||'')+((s.batteria==='si')?td('Posizionamento batteria',s.posBatteria||''):'')+((s.colonnina==='si')?td('Posizionamento Wallbox',s.posColonnina||''):'')+td('Connessione internet',[s.wifi,s.noteWifi].filter(Boolean).join(' — '))+td('Eventuali lavori a carico cliente',s.lavoriCliente||'')+td('Note riservate (ufficio)',s.noteFinali||''))}
   <div style="margin:20px 0 24px;padding:16px 20px;border:2px solid #cfd8dc;border-radius:8px;">
     <div style="font-weight:700;font-size:13px;margin-bottom:8px;">Per Conferma Cliente</div>
