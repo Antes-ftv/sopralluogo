@@ -58,9 +58,13 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS committenti (
     id TEXT PRIMARY KEY,
-    nome TEXT UNIQUE NOT NULL
+    nome TEXT UNIQUE NOT NULL,
+    listino TEXT DEFAULT 'manodopera'
   );
 `);
+
+// Migrazione: aggiungi colonna listino se non esiste (DB già esistenti)
+try { db.exec("ALTER TABLE committenti ADD COLUMN listino TEXT DEFAULT 'manodopera'"); } catch(e) {}
 
 // Crea admin di default se non esiste
 const adminExists = db.prepare("SELECT id FROM users WHERE role='admin'").get();
@@ -285,10 +289,10 @@ app.post('/api/admin/restore', authMiddleware, adminOnly, (req, res) => {
     const result = insertPhoto.run(p.id, p.survey_id, p.category || 'altro', p.nota || '', p.filename, p.created_at || new Date().toISOString());
     if (result.changes > 0) addedPhotos++;
   }
-  const insertCommittente = db.prepare('INSERT OR IGNORE INTO committenti (id, nome) VALUES (?, ?)');
+  const insertCommittente = db.prepare('INSERT OR IGNORE INTO committenti (id, nome, listino) VALUES (?, ?, ?)');
   for (const c of committenti) {
     if(!c.id || !c.nome) continue;
-    const result = insertCommittente.run(c.id, c.nome.trim());
+    const result = insertCommittente.run(c.id, c.nome.trim(), c.listino||'manodopera');
     if(result.changes > 0) addedCommittenti++;
   }
   res.json({ success: true, addedSurveys, skippedSurveys, addedUsers, skippedUsers, addedPhotos, addedCommittenti });
@@ -349,20 +353,28 @@ app.delete('/api/users/:id', authMiddleware, adminOnly, (req, res) => {
 
 // ── COMMITTENTI ROUTES ─────────────────────────────────────────
 app.get('/api/committenti', authMiddleware, (req, res) => {
-  const rows = db.prepare('SELECT id, nome FROM committenti ORDER BY nome ASC').all();
+  const rows = db.prepare('SELECT id, nome, listino FROM committenti ORDER BY nome ASC').all();
   res.json(rows);
 });
 
 app.post('/api/admin/committenti', authMiddleware, adminOnly, (req, res) => {
-  const { nome } = req.body;
+  const { nome, listino } = req.body;
   if (!nome || !nome.trim()) return res.status(400).json({ error: 'Nome richiesto' });
   const id = 'c_' + Date.now();
+  const lst = listino === 'fullservice' ? 'fullservice' : 'manodopera';
   try {
-    db.prepare('INSERT INTO committenti (id, nome) VALUES (?, ?)').run(id, nome.trim());
-    res.json({ success: true, id, nome: nome.trim() });
+    db.prepare('INSERT INTO committenti (id, nome, listino) VALUES (?, ?, ?)').run(id, nome.trim(), lst);
+    res.json({ success: true, id, nome: nome.trim(), listino: lst });
   } catch(e) {
     res.status(400).json({ error: 'Committente già esistente' });
   }
+});
+
+app.patch('/api/admin/committenti/:id', authMiddleware, adminOnly, (req, res) => {
+  const { listino } = req.body;
+  const lst = listino === 'fullservice' ? 'fullservice' : 'manodopera';
+  db.prepare('UPDATE committenti SET listino=? WHERE id=?').run(lst, req.params.id);
+  res.json({ success: true });
 });
 
 app.delete('/api/admin/committenti/:id', authMiddleware, adminOnly, (req, res) => {
