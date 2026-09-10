@@ -897,7 +897,7 @@
         <div class="form-title">Report sopralluogo</div>
         <div style="display:flex;gap:8px;margin-left:auto;">
           <button class="btn-save" style="background:#1565c0;" onclick="printSenzaTrasferta()">👷 Stampa operai</button>
-          <button class="btn-save" onclick="window.print()">🖨️ Stampa cliente</button>
+          <button class="btn-save" onclick="printCliente()">🖨️ Stampa cliente</button>
         </div>
       </div>
       <div class="report-doc" id="report-doc"></div>
@@ -983,6 +983,9 @@ let surveys = [];
 let editId = null;
 let deleteId = null;
 let currentType = 'residenziale';
+let committentiMap = {}; // nome → {id, listino}
+let currentListino = 'manodopera';
+let currentReportListino = 'manodopera';
 const toggles = {};
 const checks = {};
 let layoutBase64 = null;
@@ -1227,6 +1230,7 @@ function readForm() {
     trasfertaPasti:trasfertaDati?._pasti||null,
     trasfertaPernottamento:trasfertaDati?._pernottamento||0,
     trasfertaTotale:trasfertaDati?._totale||null,
+    listino: currentListino||'manodopera',
     extraVoci:getExtraData(),
     distintivaComponenti:currentType==='residenziale'?getDistintaData():[],
     strutturaComponenti:currentType==='residenziale'?getStrutturaData():[],
@@ -1601,6 +1605,9 @@ function populateForm(s) {
       img.src=s.firmaTecnico;
     }
   }
+  // Listino: dalla mappa committenti (aggiornata) o dal valore salvato
+  const _mapEntry = committentiMap[s.ditta];
+  currentListino = _mapEntry ? _mapEntry.listino : (s.listino||'manodopera');
   // Extra voci
   loadExtraData(s.extraVoci||[]);
   // Distinta componenti
@@ -1627,6 +1634,7 @@ function resetForm() {
   if(ss){ss.textContent='Firma qui sopra con il dito o il mouse';ss.style.color='';}
   const ss2=document.getElementById('sign-tecnico-status');
   if(ss2){ss2.textContent='Firma qui sopra con il dito o il mouse';ss2.style.color='';}
+  currentListino='manodopera';
   extraRighe=[]; renderExtraTable();
   distintivaRighe=[]; renderDistintaTable();
   strutturaRighe=[]; renderStrutturaTable();
@@ -1706,6 +1714,7 @@ function editSurvey(id) {
   document.getElementById('form-view-title').textContent='Modifica sopralluogo';
   showView('form-view');
   loadFotoSection();
+  loadCommittenti(); // aggiorna mappa listini e datalist
   window.scrollTo(0,0);
   setTimeout(()=>{initSignaturePad();initSignaturePadTecnico();},100);
 }
@@ -1758,6 +1767,22 @@ async function loadUsers() {
 async function loadCommittenti() {
   try {
     const list = await api('GET', '/api/committenti');
+    // Costruisci mappa nome→{id,listino} per auto-impostare currentListino
+    committentiMap = {};
+    list.forEach(c=>{ committentiMap[c.nome] = {id:c.id, listino:c.listino||'manodopera'}; });
+    // Aggiungi listener sul campo ditta se non già aggiunto
+    const dittoEl = document.getElementById('f-ditta');
+    if(dittoEl && !dittoEl._listinoListener) {
+      dittoEl.addEventListener('input', ()=>{
+        const entry = committentiMap[dittoEl.value.trim()];
+        currentListino = entry ? entry.listino : 'manodopera';
+      });
+      dittoEl.addEventListener('change', ()=>{
+        const entry = committentiMap[dittoEl.value.trim()];
+        currentListino = entry ? entry.listino : 'manodopera';
+      });
+      dittoEl._listinoListener = true;
+    }
     // Popola datalist nel form
     const dl = document.getElementById('committenti-datalist');
     if(dl) { dl.innerHTML = list.map(c=>`<option value="${c.nome}">`).join(''); }
@@ -1765,12 +1790,33 @@ async function loadCommittenti() {
     const el = document.getElementById('committenti-list');
     if(!el) return;
     if(!list.length){ el.innerHTML='<p style="font-size:13px;color:var(--gray);">Nessun committente aggiunto.</p>'; return; }
-    el.innerHTML = list.map(c=>`
-      <div class="user-row">
-        <div class="user-info"><div class="user-name">${c.nome}</div></div>
-        ${currentUser?.role==='admin'?`<button class="btn-icon danger" onclick="deleteCommittente('${c.id}','${c.nome.replace(/'/g,"\\'")}')">🗑️</button>`:''}
-      </div>`).join('');
+    el.innerHTML = list.map(c=>{
+      const lst = c.listino||'manodopera';
+      const badgeStyle = lst==='fullservice'
+        ? 'background:#6a1b9a;color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;'
+        : 'background:#1b5e20;color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;';
+      const badgeLabel = lst==='fullservice' ? 'Full Service' : 'Solo manodopera';
+      const isAdmin = currentUser?.role==='admin';
+      return `
+      <div class="user-row" style="gap:8px;flex-wrap:wrap;">
+        <div class="user-info" style="flex:1;min-width:120px;"><div class="user-name">${c.nome}</div></div>
+        <span style="${badgeStyle}">${badgeLabel}</span>
+        ${isAdmin?`<select style="font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid #ccc;cursor:pointer;" onchange="updateCommittenteListino('${c.id}',this.value)">
+          <option value="manodopera"${lst==='manodopera'?' selected':''}>Solo manodopera</option>
+          <option value="fullservice"${lst==='fullservice'?' selected':''}>Full Service</option>
+        </select>`:''}
+        ${isAdmin?`<button class="btn-icon danger" onclick="deleteCommittente('${c.id}','${c.nome.replace(/'/g,"\\'")}')">🗑️</button>`:''}
+      </div>`;
+    }).join('');
   } catch(e) { /* silenzioso se non autenticato */ }
+}
+
+async function updateCommittenteListino(id, listino) {
+  try {
+    await api('PATCH', '/api/admin/committenti/'+id, { listino });
+    showToast('✅ Listino aggiornato');
+    loadCommittenti();
+  } catch(e) { showToast('❌ '+e.message); }
 }
 
 async function addCommittente() {
@@ -2145,7 +2191,16 @@ function clearSignatureTecnico(){
 function row(label,value,cls=''){if(!value)return'';return`<tr><th>${label}</th><td class="rv ${cls}">${value}</td></tr>`;}
 function yesno(val){if(!val)return'—';if(val==='si')return'<span class="rv yes">✅ Sì</span>';if(val==='no')return'<span class="rv no">❌ No</span>';return val;}
 
+function printCliente() {
+  // Per clienti Full Service: nascondi le distinte materiali nella stampa cliente
+  const dist = document.getElementById('report-distinte');
+  if(dist && currentReportListino==='fullservice') dist.style.display = 'none';
+  window.print();
+  setTimeout(() => { if(dist) dist.style.display = ''; }, 500);
+}
+
 function printSenzaTrasferta() {
+  // Stampa operai: nasconde trasferta ed extra, ma mostra sempre le distinte
   const el = document.getElementById('report-trasferta');
   const ex = document.getElementById('report-extra');
   if(el) el.style.display = 'none';
@@ -2155,6 +2210,7 @@ function printSenzaTrasferta() {
 }
 
 function renderReport(s, photos=[]) {
+  currentReportListino = s.listino||'manodopera';
   const dateFmt=s.data?new Date(s.data+'T12:00:00').toLocaleDateString('it-IT'):'—';
   let subtitle = 'IMPIANTO FOTOVOLTAICO';
   if(s.batteria==='si') subtitle += ' + SISTEMA DI ACCUMULO';
@@ -2243,6 +2299,7 @@ function renderReport(s, photos=[]) {
   ${fotoHtml}
   ${sH(sn,"SCHEMA SEMPLIFICATO DELL'IMPIANTO")}<p style="font-size:13px;margin-bottom:10px;">Schema dell'impianto fotovoltaico rilevato durante il sopralluogo.</p>${schema}${tWrap(td('Potenza contatore esistente',s.potContatore?s.potContatore+' kW':'')+td('Impianto di terra esistente',s.terra?s.terra+(s.terraSezione?' — Sez. '+s.terraSezione+' mm²':''):'')+td('Interruttore generale',s.interruttore?s.interruttore+(s.interruttoreModello?' — '+s.interruttoreModello:''):'')+((s.acMt||s.acSez)?td('Linea AC',(s.acMt?s.acMt+' mt':'')+(s.acSez?' — Sez. '+s.acSez+' mm²':'')+(s.acPercorso?' — '+s.acPercorso:'')+(s.noteAc?' — '+s.noteAc:'')):'')+(( s.dcMt||s.dcSez)?td('Linea DC',(s.dcMt?s.dcMt+' mt':'')+(s.dcSez?' — Sez. '+s.dcSez+' mm²':'')+(s.dcPercorso?' — '+s.dcPercorso:'')+(s.noteDc?' — '+s.noteDc:'')):''))}
   ${sH(sn+1,"MESSA IN SICUREZZA")}${tWrap(td('Metodo di messa in sicurezza',s.sicurezza||'')+td('Utilizzo cesta',s.cesta?yesno(s.cesta)+( s.cestaGiorni?' — '+s.cestaGiorni+' giorni':'')+(s.cestaSu?' su '+s.cestaSu:''):'')+td('Altro',s.sicurezzaAltro||''))}
+  <div id="report-distinte">
   ${(()=>{
     const dc=s.distintivaComponenti||[];
     if(s.type!=='residenziale'||!dc.length) return '';
@@ -2256,6 +2313,7 @@ function renderReport(s, photos=[]) {
     if(!righe) return '';
     return `<div style="margin-bottom:20px;"><div style="background:#5d4037;color:white;padding:10px 14px;font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;border-radius:4px 4px 0 0;margin-bottom:0;">🔩 Distinta struttura fissaggio pannelli</div><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#efebe9;"><th style="border:1px solid #d7ccc8;padding:7px 10px;font-size:12px;text-align:left;">Componente</th><th style="border:1px solid #d7ccc8;padding:7px 10px;font-size:12px;text-align:center;width:80px;">Qtà</th><th style="border:1px solid #d7ccc8;padding:7px 10px;font-size:12px;text-align:center;width:80px;">U.M.</th></tr></thead><tbody>${righe}</tbody></table></div>`;
   })()}
+  </div>
   ${sH(sn+2,"NOTE TECNICHE E OSSERVAZIONI")}${tWrap(td('Calata stringhe',[s.calataPercorso,s.calataForatura,s.noteCalata].filter(Boolean).join(' — '))+td('Posizionamento inverter',s.posInverter||'')+((s.batteria==='si')?td('Posizionamento batteria',s.posBatteria||''):'')+((s.colonnina==='si')?td('Posizionamento Wallbox',s.posColonnina||''):'')+td('Connessione internet',[s.wifi,s.noteWifi].filter(Boolean).join(' — '))+td('Eventuali lavori a carico cliente',s.lavoriCliente||'')+td('Note riservate (ufficio)',s.noteFinali||''))}
   <div style="margin:20px 0 24px;padding:16px 20px;border:2px solid #cfd8dc;border-radius:8px;">
     <div style="font-weight:700;font-size:13px;margin-bottom:8px;">Per Conferma Cliente</div>
