@@ -781,6 +781,7 @@
           </table>
           <div style="margin-top:10px;display:flex;gap:10px;">
             <button onclick="calcolaDistinta()" style="background:#00695c;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;">🔄 Ricalcola da cavi</button>
+            <button onclick="addDistintaRow()" style="background:#00897b;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;">➕ Aggiungi articolo</button>
           </div>
         </div>
       </div>
@@ -801,6 +802,9 @@
             </thead>
             <tbody id="struttura-tbody"></tbody>
           </table>
+          <div style="margin-top:10px;">
+            <button onclick="addStrutturaRow()" style="background:#5d4037;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;">➕ Aggiungi articolo</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1278,9 +1282,29 @@ function renderDistintaTable() {
         oninput="distintivaRighe[${i}].qty=parseFloat(this.value)||0"
         style="width:60px;border:none;outline:none;font-size:13px;text-align:center;background:transparent;">
     </td>
-    <td style="padding:6px 8px;border:1px solid #b2dfdb;text-align:center;color:#555;">${r.um}</td>
+    <td style="padding:6px 8px;border:1px solid #b2dfdb;text-align:center;">
+      <input type="text" value="${r.um||'pz'}"
+        oninput="distintivaRighe[${i}].um=this.value"
+        style="width:50px;border:none;outline:none;font-size:13px;text-align:center;background:transparent;color:#555;">
+    </td>
     <td style="padding:6px 8px;border:1px solid #b2dfdb;font-size:11px;color:#777;">${r.note||''}</td>
+    <td style="padding:4px 6px;border:1px solid #b2dfdb;text-align:center;">
+      <button onclick="removeDistintaRow(${i})" style="background:none;border:none;cursor:pointer;font-size:14px;color:#e53935;padding:0;" title="Elimina">🗑️</button>
+    </td>
   </tr>`).join('');
+}
+
+function addDistintaRow() {
+  distintivaRighe.push({desc:'', qty:0, um:'pz', note:''});
+  renderDistintaTable();
+  // Focus sull'ultimo campo descrizione
+  const inputs = document.querySelectorAll('#distinta-tbody tr:last-child td:first-child input');
+  if(inputs.length) inputs[0].focus();
+}
+
+function removeDistintaRow(i) {
+  distintivaRighe.splice(i, 1);
+  renderDistintaTable();
 }
 
 function getDistintaData() {
@@ -1331,9 +1355,28 @@ function renderStrutturaTable() {
         oninput="strutturaRighe[${i}].qty=parseFloat(this.value)||0"
         style="width:60px;border:none;outline:none;font-size:13px;text-align:center;background:transparent;">
     </td>
-    <td style="padding:6px 8px;border:1px solid #bcaaa4;text-align:center;color:#555;">${r.um}</td>
+    <td style="padding:6px 8px;border:1px solid #bcaaa4;text-align:center;">
+      <input type="text" value="${r.um||'pz'}"
+        oninput="strutturaRighe[${i}].um=this.value"
+        style="width:50px;border:none;outline:none;font-size:13px;text-align:center;background:transparent;color:#555;">
+    </td>
     <td style="padding:6px 8px;border:1px solid #bcaaa4;font-size:11px;color:#777;">${r.note||''}</td>
+    <td style="padding:4px 6px;border:1px solid #bcaaa4;text-align:center;">
+      <button onclick="removeStrutturaRow(${i})" style="background:none;border:none;cursor:pointer;font-size:14px;color:#e53935;padding:0;" title="Elimina">🗑️</button>
+    </td>
   </tr>`).join('');
+}
+
+function addStrutturaRow() {
+  strutturaRighe.push({desc:'', qty:0, um:'pz', note:''});
+  renderStrutturaTable();
+  const inputs = document.querySelectorAll('#struttura-tbody tr:last-child td:first-child input');
+  if(inputs.length) inputs[0].focus();
+}
+
+function removeStrutturaRow(i) {
+  strutturaRighe.splice(i, 1);
+  renderStrutturaTable();
 }
 
 function getStrutturaData() {
