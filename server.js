@@ -451,8 +451,5 @@ app.post('/api/trasferta', authMiddleware, async (req, res) => {
   }
 });
 
-// ── MODULO DI INCARICO (PDF + email) ─────────────────────
-require('./incarico').register(app, db);
-
 // ── START ────────────────────────────────────────────────
 app.listen(PORT, () => console.log(`Server avviato su porta ${PORT}`));
