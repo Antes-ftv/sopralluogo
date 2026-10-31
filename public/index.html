@@ -78,6 +78,8 @@
   .card-actions{display:flex;gap:8px;}
   .btn-icon{background:none;border:1px solid var(--border);border-radius:6px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;}
   .btn-icon:hover{background:var(--gray-light);}
+  .btn-naviga{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue);border-radius:8px;padding:0 14px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;}
+  .btn-naviga:hover{background:var(--blue);color:white;}
   .btn-icon.danger:hover{background:var(--red-light);border-color:var(--red);}
   .empty-state{text-align:center;padding:60px 20px;color:var(--gray);}
   .empty-state .icon{font-size:48px;margin-bottom:12px;}
@@ -312,7 +314,7 @@
             <div class="form-group"><label>Ora sopralluogo</label><input type="time" id="f-ora"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Località</label><input type="text" id="f-localita" placeholder="Città, Provincia"></div>
+            <div class="form-group"><label>Località</label><div style="display:flex;gap:8px;"><input type="text" id="f-localita" placeholder="Via, Città, Provincia" style="flex:1;min-width:0;"><button type="button" class="btn-naviga" title="Apri navigatore" onclick="apriNavigazione(document.getElementById('f-localita').value)">🧭 Naviga</button></div></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Cliente</label><input type="text" id="f-cliente" placeholder="Nome / Ragione sociale"></div>
@@ -1709,6 +1711,13 @@ function setFilter(f){
   renderCards(document.getElementById('search-input').value);
 }
 
+function apriNavigazione(indirizzo) {
+  indirizzo=(indirizzo||'').trim();
+  if(!indirizzo){ showToast('⚠️ Inserisci prima l\'indirizzo'); return; }
+  const url='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(indirizzo)+'&travelmode=driving';
+  window.open(url,'_blank');
+}
+
 function renderCards(q='') {
   const list=document.getElementById('card-list');
   const filtered=surveys.filter(s=>{
@@ -1730,6 +1739,7 @@ function renderCards(q='') {
         <div class="card-meta">${typeBadge}${statusBadge} 📅 ${dateFmt} · 📍 ${s.localita||'—'} · 👤 ${s.tecnico||s.createdByName||'—'}${s.kw?' · ⚡ '+s.kw+' kW':''}</div>
       </div>
       <div class="card-actions" onclick="event.stopPropagation()">
+        ${s.localita?`<button class="btn-icon" title="Naviga verso ${String(s.localita).replace(/"/g,'&quot;')}" onclick="apriNavigazione(this.dataset.addr)" data-addr="${String(s.localita).replace(/"/g,'&quot;')}">🧭</button>`:''}
         <button class="btn-icon" title="Report" onclick="viewReport('${s.id}')">📄</button>
         <button class="btn-icon" title="Modifica" onclick="editSurvey('${s.id}')">✏️</button>
         <button class="btn-icon danger" title="Elimina" onclick="openDeleteModal('${s.id}')">🗑️</button>
