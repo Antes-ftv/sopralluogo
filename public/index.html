@@ -2388,5 +2388,63 @@ function renderReport(s, photos=[]) {
   <div style="font-size:10px;color:#546e7a;text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #eceff1;">ANTES SRL — Relazione di Sopralluogo — ${s.cliente||'—'} — ${s.localita||'—'}</div>`;
 }
 </script>
+<style>
+.ind-box{position:fixed;z-index:3000;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);display:none;max-height:280px;overflow:auto;font-size:14px}
+.ind-voce{padding:9px 11px;cursor:pointer;border-bottom:1px solid #f1f5f9}.ind-voce:hover{background:#eef7ee}
+.ind-cred{font-size:10px;color:#9ca3af;text-align:right;padding:2px 8px}.ind-stato{font-size:12px;margin-top:4px}
+</style>
+<script>
+// Suggerimento e verifica indirizzi (OpenStreetMap / Photon, gratuito, senza chiavi)
+(function(){
+const CAMPI=['f-localita','f-trasferta-indirizzo'];
+let timer=null, seq=0;
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function fmtPhoton(p){
+  const via=[p.street||(p.type==='street'?p.name:''),p.housenumber].filter(Boolean).join(' ');
+  const citta=p.city||p.town||p.village||p.locality||p.district||'';
+  const loc=[p.postcode,citta].filter(Boolean).join(' ');
+  const nome=(!p.street&&p.name&&p.type!=='street'&&p.type!=='city')?p.name:'';
+  return [nome,via,loc].filter(Boolean).join(', ')+((p.county&&p.county!==citta)?' ('+p.county+')':'');
+}
+async function cerca(q){
+  try{ const r=await fetch('https://photon.komoot.io/api/?limit=6&lat=44.1&lon=12.3&bbox=6.6,36.5,18.6,47.1&q='+encodeURIComponent(q)); if(!r.ok) throw 0; const j=await r.json();
+    return (j.features||[]).filter(f=>(f.properties.countrycode||'IT')==='IT').map(f=>({testo:fmtPhoton(f.properties),lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0]})).filter(x=>x.testo); }
+  catch(e){ const r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=it&limit=6&accept-language=it&q='+encodeURIComponent(q)); const j=await r.json();
+    return j.map(x=>{ const a=x.address||{}, pr=(a['ISO3166-2-lvl6']||'').replace('IT-','');
+      const t=[[a.road,a.house_number].filter(Boolean).join(' '),[a.postcode,a.city||a.town||a.village||a.hamlet].filter(Boolean).join(' ')+(pr?' ('+pr+')':'')].filter(Boolean).join(', ');
+      return {testo:t||x.display_name.replace(/, Italia$/,''),lat:+x.lat,lon:+x.lon}; }); }
+}
+function prep(inp){
+  if(inp._box) return inp._box;
+  const b=document.createElement('div'); b.className='ind-box'; document.body.appendChild(b); inp._box=b;
+  const st=document.createElement('div'); st.className='ind-stato';
+  const host=inp.parentElement.style.display==='flex'?inp.parentElement:inp; host.insertAdjacentElement('afterend',st); inp._st=st;
+  return b;
+}
+function pos(inp){ const r=inp.getBoundingClientRect(), b=inp._box; b.style.left=r.left+'px'; b.style.top=(r.bottom+2)+'px'; b.style.width=Math.max(r.width,300)+'px'; }
+function chiudi(inp){ if(inp._box) inp._box.style.display='none'; }
+function stato(inp,ok,msg){ if(inp._st){ inp._st.innerHTML=msg||''; inp._st.style.color=ok?'#1b5e20':'#b45309'; } }
+document.addEventListener('input',e=>{
+  const inp=e.target; if(!inp||!CAMPI.includes(inp.id)) return;
+  prep(inp); const q=inp.value.trim(); clearTimeout(timer); stato(inp,true,'');
+  if(q.length<5){ chiudi(inp); return; }
+  timer=setTimeout(async()=>{ const my=++seq; let res=[];
+    try{ res=await cerca(q); }catch(x){ stato(inp,false,'verifica indirizzo non disponibile'); return; }
+    if(my!==seq||document.activeElement!==inp) return;
+    const b=inp._box;
+    if(!res.length){ b.style.display='none'; stato(inp,false,'⚠ indirizzo non trovato sulla mappa: controlla via e comune'); return; }
+    b.innerHTML=res.map((x,i)=>'<div class="ind-voce" data-i="'+i+'">📍 '+esc(x.testo)+'</div>').join('')+'<div class="ind-cred">© OpenStreetMap</div>';
+    b.querySelectorAll('.ind-voce').forEach(el=>el.onmousedown=ev=>{ ev.preventDefault(); const x=res[+el.dataset.i];
+      inp.value=x.testo; chiudi(inp);
+      stato(inp,true,'✓ indirizzo trovato · <a href="https://www.google.com/maps/search/?api=1&query='+x.lat+','+x.lon+'" target="_blank" rel="noopener">vedi sulla mappa</a>');
+      if(inp.id==='f-localita'){ const t=document.getElementById('f-trasferta-indirizzo'); if(t&&!t.value.trim()) t.value=x.testo; }
+      inp.dispatchEvent(new Event('change',{bubbles:true})); });
+    pos(inp); b.style.display='block'; },450);
+});
+document.addEventListener('focusout',e=>{ const inp=e.target; if(inp&&CAMPI.includes(inp.id)) setTimeout(()=>chiudi(inp),150); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&e.target&&CAMPI.includes(e.target.id)) chiudi(e.target); });
+window.addEventListener('scroll',()=>CAMPI.forEach(id=>{ const i=document.getElementById(id); if(i&&i._box&&i._box.style.display==='block') pos(i); }),true);
+})();
+</script>
 </body>
 </html>
